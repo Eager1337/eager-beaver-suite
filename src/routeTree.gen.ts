@@ -19,6 +19,7 @@ import { Route as AuthenticatedFavoritesRouteImport } from './routes/_authentica
 import { Route as AuthenticatedDownloadsRouteImport } from './routes/_authenticated/downloads'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCollectionsRouteImport } from './routes/_authenticated/collections'
+import { Route as AuthenticatedDownloadsIdRouteImport } from './routes/_authenticated/downloads.$id'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -70,6 +71,12 @@ const AuthenticatedCollectionsRoute =
     path: '/collections',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedDownloadsIdRoute =
+  AuthenticatedDownloadsIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => AuthenticatedDownloadsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -78,9 +85,10 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/collections': typeof AuthenticatedCollectionsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/downloads': typeof AuthenticatedDownloadsRoute
+  '/downloads': typeof AuthenticatedDownloadsRouteWithChildren
   '/favorites': typeof AuthenticatedFavoritesRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/downloads/$id': typeof AuthenticatedDownloadsIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -89,9 +97,10 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/collections': typeof AuthenticatedCollectionsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/downloads': typeof AuthenticatedDownloadsRoute
+  '/downloads': typeof AuthenticatedDownloadsRouteWithChildren
   '/favorites': typeof AuthenticatedFavoritesRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/downloads/$id': typeof AuthenticatedDownloadsIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -102,9 +111,10 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/collections': typeof AuthenticatedCollectionsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
-  '/_authenticated/downloads': typeof AuthenticatedDownloadsRoute
+  '/_authenticated/downloads': typeof AuthenticatedDownloadsRouteWithChildren
   '/_authenticated/favorites': typeof AuthenticatedFavoritesRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/downloads/$id': typeof AuthenticatedDownloadsIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -118,6 +128,7 @@ export interface FileRouteTypes {
     | '/downloads'
     | '/favorites'
     | '/settings'
+    | '/downloads/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -129,6 +140,7 @@ export interface FileRouteTypes {
     | '/downloads'
     | '/favorites'
     | '/settings'
+    | '/downloads/$id'
   id:
     | '__root__'
     | '/'
@@ -141,6 +153,7 @@ export interface FileRouteTypes {
     | '/_authenticated/downloads'
     | '/_authenticated/favorites'
     | '/_authenticated/settings'
+    | '/_authenticated/downloads/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -223,13 +236,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCollectionsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/downloads/$id': {
+      id: '/_authenticated/downloads/$id'
+      path: '/$id'
+      fullPath: '/downloads/$id'
+      preLoaderRoute: typeof AuthenticatedDownloadsIdRouteImport
+      parentRoute: typeof AuthenticatedDownloadsRoute
+    }
   }
 }
+
+interface AuthenticatedDownloadsRouteChildren {
+  AuthenticatedDownloadsIdRoute: typeof AuthenticatedDownloadsIdRoute
+}
+
+const AuthenticatedDownloadsRouteChildren: AuthenticatedDownloadsRouteChildren =
+  {
+    AuthenticatedDownloadsIdRoute: AuthenticatedDownloadsIdRoute,
+  }
+
+const AuthenticatedDownloadsRouteWithChildren =
+  AuthenticatedDownloadsRoute._addFileChildren(
+    AuthenticatedDownloadsRouteChildren,
+  )
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCollectionsRoute: typeof AuthenticatedCollectionsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
-  AuthenticatedDownloadsRoute: typeof AuthenticatedDownloadsRoute
+  AuthenticatedDownloadsRoute: typeof AuthenticatedDownloadsRouteWithChildren
   AuthenticatedFavoritesRoute: typeof AuthenticatedFavoritesRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
 }
@@ -237,7 +271,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCollectionsRoute: AuthenticatedCollectionsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
-  AuthenticatedDownloadsRoute: AuthenticatedDownloadsRoute,
+  AuthenticatedDownloadsRoute: AuthenticatedDownloadsRouteWithChildren,
   AuthenticatedFavoritesRoute: AuthenticatedFavoritesRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
 }
@@ -255,13 +289,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

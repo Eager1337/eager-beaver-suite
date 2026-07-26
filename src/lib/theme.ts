@@ -1,6 +1,17 @@
 import { useEffect, useState } from "react";
 
-export type Theme = "dark" | "light";
+export type Theme = "dark" | "light" | "system";
+
+function resolveSystem(): "dark" | "light" {
+  if (typeof window === "undefined") return "dark";
+  return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+}
+
+function apply(theme: Theme) {
+  const effective = theme === "system" ? resolveSystem() : theme;
+  document.documentElement.classList.toggle("light", effective === "light");
+  document.documentElement.classList.toggle("dark", effective === "dark");
+}
 
 export function useTheme() {
   const [theme, setThemeState] = useState<Theme>("dark");
@@ -8,16 +19,18 @@ export function useTheme() {
   useEffect(() => {
     const stored = (localStorage.getItem("eb-theme") as Theme | null) ?? "dark";
     setThemeState(stored);
-    document.documentElement.classList.toggle("light", stored === "light");
-    document.documentElement.classList.toggle("dark", stored === "dark");
+    apply(stored);
   }, []);
 
   const setTheme = (next: Theme) => {
     setThemeState(next);
     localStorage.setItem("eb-theme", next);
-    document.documentElement.classList.toggle("light", next === "light");
-    document.documentElement.classList.toggle("dark", next === "dark");
+    apply(next);
   };
 
-  return { theme, setTheme, toggle: () => setTheme(theme === "dark" ? "light" : "dark") };
+  return {
+    theme,
+    setTheme,
+    toggle: () => setTheme(theme === "dark" ? "light" : "dark"),
+  };
 }
