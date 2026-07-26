@@ -16,36 +16,51 @@ export type Database = {
     Tables: {
       downloads: {
         Row: {
+          ai_caption: string | null
           created_at: string
+          error_message: string | null
           file_size: number | null
           id: string
           media_type: string
+          progress: number
           quality: string | null
           source_url: string
+          status: string
           thumbnail_url: string | null
           title: string | null
+          updated_at: string
           user_id: string
         }
         Insert: {
+          ai_caption?: string | null
           created_at?: string
+          error_message?: string | null
           file_size?: number | null
           id?: string
           media_type?: string
+          progress?: number
           quality?: string | null
           source_url: string
+          status?: string
           thumbnail_url?: string | null
           title?: string | null
+          updated_at?: string
           user_id: string
         }
         Update: {
+          ai_caption?: string | null
           created_at?: string
+          error_message?: string | null
           file_size?: number | null
           id?: string
           media_type?: string
+          progress?: number
           quality?: string | null
           source_url?: string
+          status?: string
           thumbnail_url?: string | null
           title?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -79,32 +94,38 @@ export type Database = {
       }
       profiles: {
         Row: {
+          appearance: string
           avatar_url: string | null
           bio: string | null
           country: string | null
           created_at: string
           full_name: string | null
           id: string
+          language: string
           updated_at: string
           username: string | null
         }
         Insert: {
+          appearance?: string
           avatar_url?: string | null
           bio?: string | null
           country?: string | null
           created_at?: string
           full_name?: string | null
           id: string
+          language?: string
           updated_at?: string
           username?: string | null
         }
         Update: {
+          appearance?: string
           avatar_url?: string | null
           bio?: string | null
           country?: string | null
           created_at?: string
           full_name?: string | null
           id?: string
+          language?: string
           updated_at?: string
           username?: string | null
         }
