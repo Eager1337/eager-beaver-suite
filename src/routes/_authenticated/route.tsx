@@ -114,9 +114,8 @@ function AuthenticatedLayout() {
                 <input placeholder="Search…" className="flex-1 bg-transparent outline-none text-sm" />
                 <kbd className="text-[10px] text-muted-foreground">⌘K</kbd>
               </div>
-              <button className="grid h-9 w-9 place-items-center rounded-full border border-border bg-card/40 text-muted-foreground hover:text-foreground transition-colors">
-                <Bell className="h-4 w-4" />
-              </button>
+              <NotificationBell userId={user.id} />
+
             </div>
           </div>
         </header>
