@@ -60,6 +60,13 @@ export const generateCaption = createServerFn({ method: "POST" })
       .eq("id", row.id);
     if (updateErr) throw new Error(updateErr.message);
 
+    await supabase.from("caption_versions").insert({
+      download_id: row.id,
+      user_id: userId,
+      caption,
+      source: "ai",
+    });
+
     return { caption };
   });
 
@@ -77,5 +84,16 @@ export const updateCaption = createServerFn({ method: "POST" })
       .update({ ai_caption: data.caption })
       .eq("id", data.downloadId);
     if (error) throw new Error(error.message);
+
+    if (data.caption) {
+      await context.supabase.from("caption_versions").insert({
+        download_id: data.downloadId,
+        user_id: context.userId,
+        caption: data.caption,
+        source: "manual",
+      });
+    }
+
     return { ok: true };
   });
+
