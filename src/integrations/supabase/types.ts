@@ -14,14 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      caption_versions: {
+        Row: {
+          caption: string
+          created_at: string
+          download_id: string
+          id: string
+          source: string
+          user_id: string
+        }
+        Insert: {
+          caption: string
+          created_at?: string
+          download_id: string
+          id?: string
+          source?: string
+          user_id: string
+        }
+        Update: {
+          caption?: string
+          created_at?: string
+          download_id?: string
+          id?: string
+          source?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "caption_versions_download_id_fkey"
+            columns: ["download_id"]
+            isOneToOne: false
+            referencedRelation: "downloads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       downloads: {
         Row: {
           ai_caption: string | null
+          author_name: string | null
           created_at: string
+          duration_seconds: number | null
           error_message: string | null
           file_size: number | null
+          height: number | null
           id: string
           media_type: string
+          media_url: string | null
+          preview_url: string | null
           progress: number
           quality: string | null
           source_url: string
@@ -30,14 +70,20 @@ export type Database = {
           title: string | null
           updated_at: string
           user_id: string
+          width: number | null
         }
         Insert: {
           ai_caption?: string | null
+          author_name?: string | null
           created_at?: string
+          duration_seconds?: number | null
           error_message?: string | null
           file_size?: number | null
+          height?: number | null
           id?: string
           media_type?: string
+          media_url?: string | null
+          preview_url?: string | null
           progress?: number
           quality?: string | null
           source_url: string
@@ -46,14 +92,20 @@ export type Database = {
           title?: string | null
           updated_at?: string
           user_id: string
+          width?: number | null
         }
         Update: {
           ai_caption?: string | null
+          author_name?: string | null
           created_at?: string
+          duration_seconds?: number | null
           error_message?: string | null
           file_size?: number | null
+          height?: number | null
           id?: string
           media_type?: string
+          media_url?: string | null
+          preview_url?: string | null
           progress?: number
           quality?: string | null
           source_url?: string
@@ -62,6 +114,7 @@ export type Database = {
           title?: string | null
           updated_at?: string
           user_id?: string
+          width?: number | null
         }
         Relationships: []
       }
@@ -88,6 +141,42 @@ export type Database = {
           source_url?: string
           thumbnail_url?: string | null
           title?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          link: string | null
+          read: boolean
+          title: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          link?: string | null
+          read?: boolean
+          title: string
+          type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          link?: string | null
+          read?: boolean
+          title?: string
+          type?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []

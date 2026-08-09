@@ -3,11 +3,13 @@ import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Sparkles, Loader2, ExternalLink, CheckCircle2, XCircle, Clock, Save } from "lucide-react";
+import {
+  ArrowLeft, Sparkles, Loader2, ExternalLink, CheckCircle2, XCircle, Clock, Save, History, Download as DownloadIcon,
+} from "lucide-react";
 import { toast } from "sonner";
-import { trendingPins } from "@/lib/mock-data";
 import { formatDistanceToNow } from "date-fns";
 import { generateCaption, updateCaption } from "@/lib/ai-captions.functions";
+import { MediaPreview } from "@/components/media-preview";
 
 export const Route = createFileRoute("/_authenticated/downloads/$id")({
   component: DownloadDetail,
@@ -30,9 +32,24 @@ function DownloadDetail() {
     },
   });
 
+  const { data: versions = [] } = useQuery({
+    queryKey: ["caption-versions", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("caption_versions")
+        .select("id, caption, source, created_at")
+        .eq("download_id", id)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      if (error) throw new Error(error.message);
+      return data ?? [];
+    },
+  });
+
   const [caption, setCaption] = useState("");
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => {
     if (row?.ai_caption !== undefined) setCaption(row.ai_caption ?? "");
@@ -64,15 +81,14 @@ function DownloadDetail() {
     );
   }
 
-  const swatch = trendingPins[Math.abs(hash(row.id)) % trendingPins.length].color;
-
   async function handleGenerate() {
     setGenerating(true);
     try {
-      const { caption } = await genFn({ data: { downloadId: id } });
-      setCaption(caption);
-      toast.success("Caption generated");
+      const { caption: next } = await genFn({ data: { downloadId: id } });
+      setCaption(next);
+      toast.success("Caption regenerated");
       qc.invalidateQueries({ queryKey: ["download", id] });
+      qc.invalidateQueries({ queryKey: ["caption-versions", id] });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't generate caption");
     } finally {
@@ -86,6 +102,7 @@ function DownloadDetail() {
       await saveFn({ data: { downloadId: id, caption: caption.trim() } });
       toast.success("Caption saved");
       qc.invalidateQueries({ queryKey: ["download", id] });
+      qc.invalidateQueries({ queryKey: ["caption-versions", id] });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't save");
     } finally {
@@ -102,10 +119,13 @@ function DownloadDetail() {
         <ArrowLeft className="h-4 w-4" /> Back to downloads
       </button>
 
-      <div className="grid md:grid-cols-[280px_1fr] gap-6">
-        <div
-          className="aspect-square rounded-2xl shadow-elegant"
-          style={{ background: `linear-gradient(160deg, ${swatch}, ${swatch}88)` }}
+      <div className="grid md:grid-cols-[320px_1fr] gap-6">
+        <MediaPreview
+          mediaType={row.media_type}
+          mediaUrl={row.media_url}
+          previewUrl={row.preview_url ?? row.thumbnail_url}
+          title={row.title}
+          status={row.status}
         />
 
         <div className="space-y-4">
@@ -119,14 +139,19 @@ function DownloadDetail() {
             <h1 className="mt-2 font-display text-2xl font-semibold">{row.title || "Untitled pin"}</h1>
             <div className="mt-1 text-sm text-muted-foreground">
               {row.media_type?.toUpperCase()} • {row.quality || "original"}
-              {row.file_size && <> • {(row.file_size / 1_000_000).toFixed(1)} MB</>}
+              {row.width && row.height ? <> • {row.width}×{row.height}</> : null}
+              {row.duration_seconds ? <> • {Math.round(Number(row.duration_seconds))}s</> : null}
+              {row.file_size ? <> • {(row.file_size / 1_000_000).toFixed(1)} MB</> : null}
             </div>
+            {row.author_name && (
+              <div className="mt-1 text-xs text-muted-foreground">by {row.author_name}</div>
+            )}
           </div>
 
           {(row.status === "queued" || row.status === "processing") && (
             <div>
               <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                <span>{row.status === "queued" ? "Queued…" : "Downloading…"}</span>
+                <span>{row.status === "queued" ? "Queued…" : "Fetching from Pinterest…"}</span>
                 <span>{row.progress}%</span>
               </div>
               <div className="h-2 rounded-full bg-muted overflow-hidden">
@@ -142,6 +167,17 @@ function DownloadDetail() {
           )}
 
           <div className="flex flex-wrap gap-2">
+            {row.media_url && row.status === "success" && (
+              <a
+                href={row.media_url}
+                target="_blank"
+                rel="noreferrer"
+                download
+                className="inline-flex items-center gap-1.5 rounded-full bg-gradient-primary px-4 py-1.5 text-xs font-semibold text-primary-foreground shadow-glow"
+              >
+                <DownloadIcon className="h-3 w-3" /> Save file
+              </a>
+            )}
             <a
               href={row.source_url}
               target="_blank"
@@ -155,7 +191,7 @@ function DownloadDetail() {
       </div>
 
       <div className="glass rounded-2xl p-5 space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           <div>
             <h2 className="font-display text-lg font-semibold flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-primary" /> AI caption
@@ -168,7 +204,7 @@ function DownloadDetail() {
             className="inline-flex items-center gap-2 rounded-full bg-gradient-primary px-4 py-2 text-xs font-semibold text-primary-foreground shadow-glow disabled:opacity-50"
           >
             {generating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-            {row.ai_caption ? "Regenerate" : "Generate"}
+            {row.ai_caption ? "Regenerate caption" : "Generate caption"}
           </button>
         </div>
 
@@ -183,15 +219,46 @@ function DownloadDetail() {
 
         <div className="flex items-center justify-between">
           <span className="text-xs text-muted-foreground">{caption.length} / 1000</span>
-          <button
-            onClick={handleSave}
-            disabled={saving || caption === (row.ai_caption ?? "")}
-            className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-1.5 text-xs font-medium hover:bg-accent/60 disabled:opacity-50"
-          >
-            {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
-            Save
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowHistory((v) => !v)}
+              className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-medium hover:bg-accent/60"
+            >
+              <History className="h-3 w-3" /> Versions ({versions.length})
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving || caption === (row.ai_caption ?? "")}
+              className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-1.5 text-xs font-medium hover:bg-accent/60 disabled:opacity-50"
+            >
+              {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
+              Save
+            </button>
+          </div>
         </div>
+
+        {showHistory && (
+          <ul className="space-y-2 pt-2 border-t border-border/60">
+            {versions.length === 0 && (
+              <li className="text-xs text-muted-foreground py-2">No versions logged yet.</li>
+            )}
+            {versions.map((v) => (
+              <li key={v.id} className="rounded-xl bg-background/50 p-3">
+                <div className="flex items-center justify-between text-[10px] uppercase tracking-wide text-muted-foreground">
+                  <span>{v.source === "ai" ? "AI generated" : "Edited"}</span>
+                  <span>{formatDistanceToNow(new Date(v.created_at), { addSuffix: true })}</span>
+                </div>
+                <p className="mt-1 text-xs whitespace-pre-wrap">{v.caption}</p>
+                <button
+                  onClick={() => setCaption(v.caption)}
+                  className="mt-2 text-[11px] font-medium text-primary hover:underline"
+                >
+                  Restore this version
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );
@@ -211,10 +278,4 @@ function StatusBadge({ status }: { status: string }) {
       {s.label}
     </span>
   );
-}
-
-function hash(s: string) {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (h << 5) - h + s.charCodeAt(i);
-  return h;
 }

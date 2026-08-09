@@ -3,8 +3,9 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   LayoutDashboard, Download, Heart, FolderHeart, Settings,
-  Sparkles, LogOut, Bell, Search, ChevronRight,
+  Sparkles, LogOut, Search, ChevronRight,
 } from "lucide-react";
+import { NotificationBell } from "@/components/notification-bell";
 import { toast } from "sonner";
 import type { User } from "@supabase/supabase-js";
 import { useQueryClient } from "@tanstack/react-query";
@@ -114,9 +115,8 @@ function AuthenticatedLayout() {
                 <input placeholder="Search…" className="flex-1 bg-transparent outline-none text-sm" />
                 <kbd className="text-[10px] text-muted-foreground">⌘K</kbd>
               </div>
-              <button className="grid h-9 w-9 place-items-center rounded-full border border-border bg-card/40 text-muted-foreground hover:text-foreground transition-colors">
-                <Bell className="h-4 w-4" />
-              </button>
+              <NotificationBell userId={user.id} />
+
             </div>
           </div>
         </header>
