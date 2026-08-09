@@ -118,10 +118,7 @@ export async function resolvePinterestMedia(
     meta(html, "og:title") ??
     firstMatch(html, /<title[^>]*>([^<]{2,160})<\/title>/i) ??
     null;
-  const authorName =
-    meta(html, "og:description")?.split(" on Pinterest")[0]?.slice(0, 80) ??
-    firstMatch(html, /"full_name"\s*:\s*"([^"]{1,80})"/) ??
-    null;
+  const authorName = firstMatch(html, /"full_name"\s*:\s*"([^"]{1,80})"/) ?? null;
 
   const videoUrl = meta(html, "og:video") ?? meta(html, "og:video:url") ?? pickQualityUrl(html, quality);
   const ogImage = meta(html, "og:image");
