@@ -3,8 +3,9 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   LayoutDashboard, Download, Heart, FolderHeart, Settings,
-  Sparkles, LogOut, Bell, Search, ChevronRight,
+  Sparkles, LogOut, Search, ChevronRight,
 } from "lucide-react";
+import { NotificationBell } from "@/components/notification-bell";
 import { toast } from "sonner";
 import type { User } from "@supabase/supabase-js";
 import { useQueryClient } from "@tanstack/react-query";
