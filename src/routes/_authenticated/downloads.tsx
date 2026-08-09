@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Download, Trash2, ExternalLink, CheckCircle2, XCircle, Loader2, Clock, Eye } from "lucide-react";
-import { trendingPins } from "@/lib/mock-data";
+import { Download, Trash2, ExternalLink, CheckCircle2, XCircle, Loader2, Clock, Eye, ImageOff } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { processDownload } from "@/lib/downloads.functions";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 
@@ -20,19 +21,22 @@ type Row = {
   status: string;
   progress: number;
   error_message: string | null;
+  preview_url: string | null;
+  thumbnail_url: string | null;
   created_at: string;
 };
 
 function DownloadsPage() {
   const { user } = Route.useRouteContext();
   const qc = useQueryClient();
+  const runDownload = useServerFn(processDownload);
 
   const { data: rows = [], isLoading } = useQuery({
     queryKey: ["downloads", user.id],
     queryFn: async () => {
       const { data } = await supabase
         .from("downloads")
-        .select("id, title, media_type, quality, source_url, status, progress, error_message, created_at")
+        .select("id, title, media_type, quality, source_url, status, progress, error_message, preview_url, thumbnail_url, created_at")
         .order("created_at", { ascending: false });
       return (data ?? []) as Row[];
     },
@@ -65,13 +69,16 @@ function DownloadsPage() {
       .from("downloads")
       .update({ status: "queued", progress: 0, error_message: null })
       .eq("id", id);
-    if (error) toast.error("Couldn't retry");
-    else {
-      toast.success("Re-queued");
-      // simulate a new worker pass
-      const { simulateRetry } = await import("@/lib/download-simulator");
-      const row = rows.find((r) => r.id === id);
-      if (row) void simulateRetry(id, row.media_type);
+    if (error) return toast.error("Couldn't retry");
+    toast.success("Re-queued");
+    try {
+      const res = await runDownload({ data: { downloadId: id } });
+      if (res.ok) toast.success("Download ready");
+      else toast.error(res.error);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Retry failed");
+    } finally {
+      qc.invalidateQueries({ queryKey: ["downloads", user.id] });
     }
   }
 
@@ -98,15 +105,10 @@ function DownloadsPage() {
           </div>
         ) : (
           <ul className="divide-y divide-border/60">
-            {rows.map((r, i) => (
+            {rows.map((r) => (
               <li key={r.id} className="p-4 hover:bg-accent/30 transition-colors">
                 <div className="flex items-center gap-4">
-                  <div
-                    className="h-14 w-14 rounded-lg shrink-0"
-                    style={{
-                      background: `linear-gradient(160deg, ${trendingPins[i % trendingPins.length].color}, ${trendingPins[i % trendingPins.length].color}88)`,
-                    }}
-                  />
+                  <Thumb src={r.preview_url ?? r.thumbnail_url} alt={r.title ?? "Pin"} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <div className="text-sm font-medium truncate">{r.title || "Untitled pin"}</div>
@@ -158,6 +160,16 @@ function DownloadsPage() {
         )}
       </div>
     </div>
+  );
+}
+
+function Thumb({ src, alt }: { src: string | null; alt: string }) {
+  const [failed, setFailed] = useState(false);
+  if (!src || failed) {
+    return <div className="h-14 w-14 rounded-lg shrink-0 bg-muted grid place-items-center"><ImageOff className="h-4 w-4 text-muted-foreground" /></div>;
+  }
+  return (
+    <img src={src} alt={alt} loading="lazy" onError={() => setFailed(true)} className="h-14 w-14 rounded-lg shrink-0 object-cover bg-muted" />
   );
 }
 
