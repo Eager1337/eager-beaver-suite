@@ -5,6 +5,15 @@
 // This is intentionally provider-shaped: swap `resolvePinterestMedia` for a
 // paid API client later without touching any caller.
 
+export type MediaVariant = {
+  id: string;
+  label: string;
+  mediaType: "image" | "video" | "gif";
+  url: string;
+  width: number | null;
+  height: number | null;
+};
+
 export type ResolvedMedia = {
   title: string | null;
   authorName: string | null;
@@ -15,6 +24,7 @@ export type ResolvedMedia = {
   height: number | null;
   durationSeconds: number | null;
   fileSize: number | null;
+  variants: MediaVariant[];
 };
 
 const UA =
@@ -47,27 +57,67 @@ function firstMatch(html: string, re: RegExp): string | null {
   return m?.[1] ? decode(m[1]) : null;
 }
 
+const VIDEO_KEYS = ["V_EXP7", "V_EXP6", "V_EXP5", "V_EXP4", "V_EXP3", "V_720P"] as const;
+
+function videoRendition(html: string, key: string): string | null {
+  return firstMatch(
+    html,
+    new RegExp(`"${key}"\\s*:\\s*\\{[^{}]*?"url"\\s*:\\s*"([^"]+)"`, "i"),
+  );
+}
+
 function pickQualityUrl(html: string, quality: string): string | null {
-  // Pinterest embeds a video_list keyed by rendition.
   const order =
     quality === "720p"
-      ? ["V_720P", "V_HLSV4", "V_EXP7", "V_EXP6"]
-      : ["V_EXP7", "V_HLSV4", "V_720P", "V_EXP6"];
+      ? ["V_720P", "V_EXP7", "V_EXP6"]
+      : ["V_EXP7", "V_720P", "V_EXP6"];
   for (const key of order) {
-    const url = firstMatch(
-      html,
-      new RegExp(`"${key}"\\s*:\\s*\\{[^{}]*?"url"\\s*:\\s*"([^"]+)"`, "i"),
-    );
+    const url = videoRendition(html, key);
     if (url) return url;
   }
   return firstMatch(html, /"url"\s*:\s*"(https:\\?\/\\?\/[^"]+\.mp4[^"]*)"/i);
 }
 
+function resizeImage(url: string, size: string): string {
+  return url.replace(/\/(originals|\d+x\d*)\//, `/${size}/`);
+}
+
 function upgradeImageQuality(url: string, quality: string): string {
   // Pinterest image CDN paths encode size as /236x/, /564x/, /originals/.
-  if (quality === "original") return url.replace(/\/\d+x\d*\//, "/originals/");
-  if (quality === "1080p") return url.replace(/\/\d+x\d*\//, "/1200x/");
-  return url.replace(/\/\d+x\d*\//, "/736x/");
+  if (quality === "original") return resizeImage(url, "originals");
+  if (quality === "1080p") return resizeImage(url, "1200x");
+  return resizeImage(url, "736x");
+}
+
+function imageVariants(
+  ogImage: string,
+  isGif: boolean,
+  width: number | null,
+  height: number | null,
+): MediaVariant[] {
+  const type: MediaVariant["mediaType"] = isGif ? "gif" : "image";
+  const sizes: Array<[string, string]> = [
+    ["originals", "Original quality"],
+    ["1200x", "Large · 1200px wide"],
+    ["736x", "Medium · 736px wide"],
+    ["564x", "Small · 564px wide"],
+  ];
+  const seen = new Set<string>();
+  const out: MediaVariant[] = [];
+  for (const [size, label] of sizes) {
+    const url = resizeImage(ogImage, size);
+    if (seen.has(url)) continue;
+    seen.add(url);
+    out.push({
+      id: size,
+      label: `${type.toUpperCase()} · ${label}`,
+      mediaType: type,
+      url,
+      width: size === "originals" ? width : Number(size.replace(/x.*/, "")) || null,
+      height: size === "originals" ? height : null,
+    });
+  }
+  return out;
 }
 
 async function headSize(url: string): Promise<number | null> {
@@ -126,10 +176,47 @@ export async function resolvePinterestMedia(
   const width = Number(meta(html, "og:image:width") ?? "") || null;
   const height = Number(meta(html, "og:image:height") ?? "") || null;
   const duration = Number(firstMatch(html, /"duration"\s*:\s*(\d+)/) ?? "") || null;
+  const cleanTitle = title?.replace(/\s*\|\s*Pinterest\s*$/i, "").trim() || null;
 
   if (videoUrl) {
+    const seen = new Set<string>();
+    const variants: MediaVariant[] = [];
+    for (const key of VIDEO_KEYS) {
+      const url = videoRendition(html, key);
+      if (!url || seen.has(url) || !/\.mp4/i.test(url)) continue;
+      seen.add(url);
+      variants.push({
+        id: key,
+        label: `MP4 · ${key === "V_720P" ? "720p" : "Best available"}`,
+        mediaType: "video",
+        url,
+        width: null,
+        height: null,
+      });
+    }
+    if (!seen.has(videoUrl)) {
+      variants.unshift({
+        id: "default",
+        label: "MP4 · Original",
+        mediaType: "video",
+        url: videoUrl,
+        width: null,
+        height: null,
+      });
+    }
+    if (ogImage) {
+      variants.push({
+        id: "poster",
+        label: "JPG · Cover image",
+        mediaType: "image",
+        url: resizeImage(ogImage, "originals"),
+        width,
+        height,
+      });
+    }
+
     return {
-      title: title?.replace(/\s*\|\s*Pinterest\s*$/i, "").trim() || null,
+      title: cleanTitle,
       authorName,
       mediaType: "video",
       mediaUrl: videoUrl,
@@ -138,6 +225,7 @@ export async function resolvePinterestMedia(
       height,
       durationSeconds: duration ? duration / 1000 : null,
       fileSize: await headSize(videoUrl),
+      variants,
     };
   }
 
@@ -151,7 +239,7 @@ export async function resolvePinterestMedia(
   const isGif = /\.gif(\?|$)/i.test(mediaUrl) || /"is_gif"\s*:\s*true/i.test(html);
 
   return {
-    title: title?.replace(/\s*\|\s*Pinterest\s*$/i, "").trim() || null,
+    title: cleanTitle,
     authorName,
     mediaType: isGif ? "gif" : "image",
     mediaUrl,
@@ -160,5 +248,6 @@ export async function resolvePinterestMedia(
     height,
     durationSeconds: null,
     fileSize: (await headSize(mediaUrl)) ?? (await headSize(ogImage)),
+    variants: imageVariants(ogImage, isGif, width, height),
   };
 }
