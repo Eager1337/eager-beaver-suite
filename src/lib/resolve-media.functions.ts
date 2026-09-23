@@ -18,6 +18,14 @@ export type ResolveResult =
       height: number | null;
       durationSeconds: number | null;
       fileSize: number | null;
+      variants: {
+        id: string;
+        label: string;
+        mediaType: "image" | "video" | "gif";
+        url: string;
+        width: number | null;
+        height: number | null;
+      }[];
     }
   | { ok: false; error: string };
 
