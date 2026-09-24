@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-const ALLOWED = /(^|\.)(pinimg\.com|pinterest\.com|pinterest\.[a-z.]+)$/i;
+const ALLOWED = /(^|\.)(pinimg\.com|pinterest\.com|pinterest\.[a-z.]+|ytimg\.com|cdninstagram\.com|fbcdn\.net)$/i;
 
 const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36";

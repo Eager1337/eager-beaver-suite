@@ -11,7 +11,9 @@ import {
   Copy,
   CheckCircle2,
   History,
+  Youtube,
 } from "lucide-react";
+import { SocialMode } from "@/components/social-downloader";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
@@ -30,7 +32,7 @@ const pinUrl = z
 
 type Resolved = Extract<ResolveResult, { ok: true }>;
 type Variant = Resolved["variants"][number];
-type Mode = "single" | "batch" | "ai";
+type Mode = "single" | "batch" | "ai" | "social";
 
 type LocalItem = {
   id: string;
@@ -126,11 +128,13 @@ function ResultCard({
   sourceUrl,
   onSave,
   onRemove,
+  onPick,
 }: {
   result: Resolved;
   sourceUrl: string;
   onSave: (m: Resolved, v: Variant, src: string) => Promise<void>;
   onRemove?: () => void;
+  onPick?: (v: Variant) => void;
 }) {
   const variants = result.variants?.length
     ? result.variants
@@ -206,7 +210,10 @@ function ResultCard({
                 <button
                   key={v.id}
                   type="button"
-                  onClick={() => setVid(v.id)}
+                  onClick={() => {
+                    setVid(v.id);
+                    onPick?.(v);
+                  }}
                   className={`rounded-full px-3 py-1 text-xs transition-colors ${
                     v.id === variant.id
                       ? "bg-gradient-primary text-primary-foreground"
@@ -253,11 +260,12 @@ export function PinterestDownloader({ compact = false }: { compact?: boolean }) 
     ["single", "Single", LinkIcon],
     ["batch", "Batch", Layers],
     ["ai", "AI describe", Sparkles],
+    ["social", "YouTube & Instagram", Youtube],
   ];
 
   return (
     <div className={compact ? "" : "relative"}>
-      <div className="mb-3 inline-flex rounded-full border border-border bg-card/40 p-1">
+      <div className="mb-3 inline-flex flex-wrap justify-center rounded-full border border-border bg-card/40 p-1">
         {tabs.map(([m, label, Icon]) => (
           <button
             key={m}
@@ -275,6 +283,7 @@ export function PinterestDownloader({ compact = false }: { compact?: boolean }) 
       {mode === "single" && <SingleMode onSave={save} />}
       {mode === "batch" && <BatchMode onSave={save} />}
       {mode === "ai" && <AiMode />}
+      {mode === "social" && <SocialMode />}
 
       {local.length > 0 && (
         <div className="mt-8 text-left">
@@ -388,7 +397,7 @@ function SingleMode({ onSave }: { onSave: (m: Resolved, v: Variant, s: string) =
   );
 }
 
-type BatchItem = { src: string; state: "loading" | "ok" | "error"; r?: Resolved; error?: string };
+type BatchItem = { src: string; state: "loading" | "ok" | "error"; r?: Resolved; error?: string; pick?: Variant };
 
 function BatchMode({ onSave }: { onSave: (m: Resolved, v: Variant, s: string) => Promise<void> }) {
   const [text, setText] = useState("");
@@ -429,7 +438,7 @@ function BatchMode({ onSave }: { onSave: (m: Resolved, v: Variant, s: string) =>
   async function downloadAll() {
     for (const it of ready) {
       const r = it.r!;
-      const v = r.variants?.[0] ?? {
+      const v = it.pick ?? r.variants?.[0] ?? {
         id: "default",
         label: r.mediaType,
         mediaType: r.mediaType,
@@ -493,6 +502,7 @@ function BatchMode({ onSave }: { onSave: (m: Resolved, v: Variant, s: string) =>
               result={it.r!}
               sourceUrl={it.src}
               onSave={onSave}
+              onPick={(v) => setItems((p) => p.map((x, j) => (j === i ? { ...x, pick: v } : x)))}
               onRemove={() => setItems((p) => p.filter((_, j) => j !== i))}
             />
           ),
