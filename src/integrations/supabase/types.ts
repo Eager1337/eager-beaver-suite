@@ -220,6 +220,39 @@ export type Database = {
         }
         Relationships: []
       }
+      video_links: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          id: string
+          poster_url: string | null
+          source: string
+          title: string | null
+          video_url: string
+        }
+        Insert: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          poster_url?: string | null
+          source?: string
+          title?: string | null
+          video_url: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          poster_url?: string | null
+          source?: string
+          title?: string | null
+          video_url?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
