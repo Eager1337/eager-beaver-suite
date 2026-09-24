@@ -2,14 +2,35 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { PinterestDownloader } from "@/components/pinterest-downloader";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
-import { trendingPins, categories, testimonials, faqs } from "@/lib/mock-data";
+import { categories, testimonials, faqs } from "@/lib/mock-data";
 import {
   Sparkles, Wand2, FolderHeart, Zap, Shield, Layers,
-  TrendingUp, Clock, ChevronRight, Check, Star,
+  TrendingUp, ChevronRight, Check, Star,
 } from "lucide-react";
 import { useState } from "react";
+import owner from "@/assets/owner.jpg.asset.json";
+import freetown from "@/assets/sl-freetown.jpg";
+import beach from "@/assets/sl-beach.jpg";
+import market from "@/assets/sl-market.jpg";
+
+const slMedia: { title: string; creator: string; src: string; video?: string }[] = [
+  { title: "Freetown at golden hour", creator: "@salone.views", src: freetown },
+  { title: "Founder of EagerBeaver", creator: "@eagerbeaver", src: owner.url },
+  { title: "River No. 2 Beach", creator: "@visit.salone", src: beach },
+  { title: "Market day in Freetown", creator: "@sweet.salone", src: market },
+];
 
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "EagerBeaver — Pinterest, YouTube & more downloader for Sierra Leone" },
+      { name: "description", content: "Save Pinterest pins, videos and GIFs in original quality. Built for Sierra Leoneans, no login needed." },
+      { property: "og:title", content: "EagerBeaver — media downloader for Sierra Leone" },
+      { property: "og:description", content: "Save Pinterest pins, videos and GIFs in original quality, free." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: Landing,
 });
 
@@ -92,26 +113,17 @@ function TrendingSection() {
       </div>
 
       <div className="columns-2 md:columns-3 lg:columns-4 gap-4 [column-fill:_balance]">
-        {trendingPins.map((pin, i) => (
-          <div
-            key={pin.id}
-            className="mb-4 break-inside-avoid group cursor-pointer animate-fade-up"
-            style={{ animationDelay: `${i * 30}ms` }}
-          >
-            <div
-              className="relative overflow-hidden rounded-2xl shadow-elegant transition-transform group-hover:-translate-y-1"
-              style={{
-                aspectRatio: pin.aspect,
-                background: `linear-gradient(160deg, ${pin.color}, ${pin.color}88 60%, ${pin.color}44)`,
-              }}
-            >
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-              <div className="absolute inset-x-3 bottom-3 translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all">
-                <div className="text-xs font-semibold text-white">{pin.title}</div>
-                <div className="text-[10px] text-white/70">{pin.creator}</div>
-              </div>
-              <div className="absolute top-3 right-3 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium text-black opacity-0 group-hover:opacity-100 transition-opacity">
-                {pin.category}
+        {slMedia.map((m, i) => (
+          <div key={m.title} className="mb-4 break-inside-avoid group animate-fade-up" style={{ animationDelay: `${i * 40}ms` }}>
+            <div className="relative overflow-hidden rounded-2xl shadow-elegant transition-transform group-hover:-translate-y-1">
+              {m.video ? (
+                <video src={m.video} poster={m.src} autoPlay muted loop playsInline className="w-full object-cover" />
+              ) : (
+                <img src={m.src} alt={m.title} loading="lazy" className="w-full object-cover animate-kenburns" />
+              )}
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/90 to-transparent p-3">
+                <div className="text-xs font-semibold text-foreground">{m.title}</div>
+                <div className="text-[10px] text-muted-foreground">{m.creator}</div>
               </div>
             </div>
           </div>
