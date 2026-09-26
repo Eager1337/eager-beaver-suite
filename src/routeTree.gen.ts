@@ -10,10 +10,12 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as LinksRouteImport } from './routes/links'
 import { Route as DownloaderRouteImport } from './routes/downloader'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as VCodeRouteImport } from './routes/v.$code'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedFavoritesRouteImport } from './routes/_authenticated/favorites'
 import { Route as AuthenticatedDownloadsRouteImport } from './routes/_authenticated/downloads'
@@ -25,6 +27,11 @@ import { Route as AuthenticatedDownloadsIdRouteImport } from './routes/_authenti
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LinksRoute = LinksRouteImport.update({
+  id: '/links',
+  path: '/links',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DownloaderRoute = DownloaderRouteImport.update({
@@ -44,6 +51,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VCodeRoute = VCodeRouteImport.update({
+  id: '/v/$code',
+  path: '/v/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
@@ -88,12 +100,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/downloader': typeof DownloaderRoute
+  '/links': typeof LinksRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/collections': typeof AuthenticatedCollectionsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/downloads': typeof AuthenticatedDownloadsRouteWithChildren
   '/favorites': typeof AuthenticatedFavoritesRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/v/$code': typeof VCodeRoute
   '/downloads/$id': typeof AuthenticatedDownloadsIdRoute
   '/api/public/media': typeof ApiPublicMediaRoute
 }
@@ -101,12 +115,14 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/downloader': typeof DownloaderRoute
+  '/links': typeof LinksRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/collections': typeof AuthenticatedCollectionsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/downloads': typeof AuthenticatedDownloadsRouteWithChildren
   '/favorites': typeof AuthenticatedFavoritesRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/v/$code': typeof VCodeRoute
   '/downloads/$id': typeof AuthenticatedDownloadsIdRoute
   '/api/public/media': typeof ApiPublicMediaRoute
 }
@@ -116,12 +132,14 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/downloader': typeof DownloaderRoute
+  '/links': typeof LinksRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/collections': typeof AuthenticatedCollectionsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/downloads': typeof AuthenticatedDownloadsRouteWithChildren
   '/_authenticated/favorites': typeof AuthenticatedFavoritesRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/v/$code': typeof VCodeRoute
   '/_authenticated/downloads/$id': typeof AuthenticatedDownloadsIdRoute
   '/api/public/media': typeof ApiPublicMediaRoute
 }
@@ -131,12 +149,14 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/downloader'
+    | '/links'
     | '/sitemap.xml'
     | '/collections'
     | '/dashboard'
     | '/downloads'
     | '/favorites'
     | '/settings'
+    | '/v/$code'
     | '/downloads/$id'
     | '/api/public/media'
   fileRoutesByTo: FileRoutesByTo
@@ -144,12 +164,14 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/downloader'
+    | '/links'
     | '/sitemap.xml'
     | '/collections'
     | '/dashboard'
     | '/downloads'
     | '/favorites'
     | '/settings'
+    | '/v/$code'
     | '/downloads/$id'
     | '/api/public/media'
   id:
@@ -158,12 +180,14 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/downloader'
+    | '/links'
     | '/sitemap.xml'
     | '/_authenticated/collections'
     | '/_authenticated/dashboard'
     | '/_authenticated/downloads'
     | '/_authenticated/favorites'
     | '/_authenticated/settings'
+    | '/v/$code'
     | '/_authenticated/downloads/$id'
     | '/api/public/media'
   fileRoutesById: FileRoutesById
@@ -173,7 +197,9 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   DownloaderRoute: typeof DownloaderRoute
+  LinksRoute: typeof LinksRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  VCodeRoute: typeof VCodeRoute
   ApiPublicMediaRoute: typeof ApiPublicMediaRoute
 }
 
@@ -184,6 +210,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/links': {
+      id: '/links'
+      path: '/links'
+      fullPath: '/links'
+      preLoaderRoute: typeof LinksRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/downloader': {
@@ -212,6 +245,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/v/$code': {
+      id: '/v/$code'
+      path: '/v/$code'
+      fullPath: '/v/$code'
+      preLoaderRoute: typeof VCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/settings': {
@@ -304,7 +344,9 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   DownloaderRoute: DownloaderRoute,
+  LinksRoute: LinksRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  VCodeRoute: VCodeRoute,
   ApiPublicMediaRoute: ApiPublicMediaRoute,
 }
 export const routeTree = rootRouteImport
