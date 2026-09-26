@@ -1,10 +1,15 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Download, Loader2, Youtube, Instagram } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { Download, Loader2, Globe, Link2 } from "lucide-react";
 import { toast } from "sonner";
 import { resolveSocial, type SocialResult } from "@/lib/social.functions";
+import { supabase } from "@/integrations/supabase/client";
 
 type Ok = Extract<SocialResult, { ok: true }>;
+
+export const proxied = (url: string, title: string, inline = false) =>
+  `/api/public/media?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(title.slice(0, 60))}${inline ? "&inline=1" : ""}`;
 
 export function SocialMode() {
   const [url, setUrl] = useState("");
@@ -12,6 +17,7 @@ export function SocialMode() {
   const [res, setRes] = useState<Ok | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const run = useServerFn(resolveSocial);
+  const qc = useQueryClient();
 
   async function go(e: React.FormEvent) {
     e.preventDefault();
@@ -23,10 +29,33 @@ export function SocialMode() {
       if (r.ok) setRes(r);
       else setErr(r.error);
     } catch {
-      setErr("Please paste a valid YouTube or Instagram link.");
+      setErr("Please paste a full link starting with https://");
     }
     setBusy(false);
   }
+
+  async function save(v: Ok["variants"][number]) {
+    if (!res) return;
+    const { data } = await supabase.auth.getUser();
+    if (!data.user) return;
+    await supabase.from("downloads").insert({
+      user_id: data.user.id,
+      source_url: url.trim(),
+      quality: v.label,
+      status: "success",
+      progress: 100,
+      title: res.title,
+      author_name: res.author,
+      media_type: v.kind === "image" ? "image" : "video",
+      media_url: v.url,
+      preview_url: res.cover,
+      thumbnail_url: res.cover,
+    });
+    qc.invalidateQueries({ queryKey: ["downloads"] });
+    toast.success("Saved to your Downloads");
+  }
+
+  const firstVideo = res?.variants.find((v) => v.kind === "video");
 
   return (
     <>
@@ -34,49 +63,48 @@ export function SocialMode() {
         <input
           value={url}
           onChange={(e) => setUrl(e.target.value)}
-          placeholder="Paste a YouTube or Instagram link"
+          placeholder="Paste a YouTube, TikTok, Instagram or any video link"
           className="flex-1 bg-transparent px-3 text-sm outline-none placeholder:text-muted-foreground"
         />
         <button
           disabled={busy || !url.trim()}
           className="inline-flex items-center gap-2 rounded-xl bg-gradient-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-glow disabled:opacity-50"
         >
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Youtube className="h-4 w-4" />} Fetch
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Globe className="h-4 w-4" />} Fetch
         </button>
       </form>
-      <p className="mt-2 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-        <Instagram className="h-3.5 w-3.5" /> Instagram support is coming soon.
-      </p>
       {err && <div className="mt-4 rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-sm text-left">{err}</div>}
       {res && (
         <div className="mt-6 glass rounded-2xl p-4 text-left space-y-3 animate-fade-up">
-          <div className="aspect-video overflow-hidden rounded-xl">
-            <iframe
-              className="h-full w-full"
-              src={`https://www.youtube.com/embed/${res.videoId}`}
-              title={res.title}
-              allowFullScreen
-            />
+          <div className="overflow-hidden rounded-xl bg-muted">
+            {firstVideo ? (
+              <video src={proxied(firstVideo.url, res.title, true)} poster={res.cover ?? undefined} controls playsInline className="max-h-[480px] w-full" />
+            ) : res.embedUrl ? (
+              <iframe className="aspect-video w-full" src={res.embedUrl} title={res.title} allowFullScreen />
+            ) : res.cover ? (
+              <img src={res.cover} alt={res.title} className="w-full" />
+            ) : null}
           </div>
           <div>
-            <p className="font-medium">{res.title}</p>
-            <p className="text-xs text-muted-foreground">{res.author}</p>
+            <p className="font-medium line-clamp-2">{res.title}</p>
+            {res.author && <p className="text-xs text-muted-foreground">{res.author} · {res.platform}</p>}
           </div>
           <div className="flex flex-wrap gap-2">
-            {res.thumbs.map((t) => (
+            {res.variants.map((v) => (
               <a
-                key={t.label}
-                href={`/api/public/media?url=${encodeURIComponent(t.url)}&filename=${encodeURIComponent(res.title.slice(0, 60))}`}
-                onClick={() => toast.success("Cover image downloading")}
+                key={v.url + v.label}
+                href={proxied(v.url, res.title)}
+                onClick={() => { toast.success("Download started"); void save(v); }}
                 className="inline-flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs hover:bg-accent/60"
               >
-                <Download className="h-3.5 w-3.5" /> {t.label}
+                <Download className="h-3.5 w-3.5" /> {v.label}
               </a>
             ))}
+            <a href={`/links?url=${encodeURIComponent(url.trim())}`} className="inline-flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs hover:bg-accent/60">
+              <Link2 className="h-3.5 w-3.5" /> Make share link
+            </a>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Full video (MP4) saving from YouTube needs a download partner service — covers work today.
-          </p>
+          {res.note && <p className="text-xs text-muted-foreground">{res.note}</p>}
         </div>
       )}
     </>
