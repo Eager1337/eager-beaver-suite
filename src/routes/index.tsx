@@ -12,8 +12,10 @@ import owner from "@/assets/owner.jpg.asset.json";
 import freetown from "@/assets/sl-freetown.jpg";
 import beach from "@/assets/sl-beach.jpg";
 import market from "@/assets/sl-market.jpg";
+import kkAdvert from "@/assets/kk-advert.mp4";
 
 const slMedia: { title: string; creator: string; src: string; video?: string }[] = [
+  { title: "KK Advertisement", creator: "@eagerbeaver", src: owner.url, video: kkAdvert },
   { title: "Freetown at golden hour", creator: "@salone.views", src: freetown },
   { title: "Founder of EagerBeaver", creator: "@eagerbeaver", src: owner.url },
   { title: "River No. 2 Beach", creator: "@visit.salone", src: beach },
