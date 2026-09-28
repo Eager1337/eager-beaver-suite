@@ -32,23 +32,23 @@ export function SiteFooter() {
             </form>
           </div>
 
-          <FooterCol title="Product" links={[
-            { label: "Downloader", to: "/downloader" },
+          <FooterCol title="Download" links={[
+            { label: "Home", to: "/" },
+            { label: "Pinterest downloader", to: "/downloader" },
+            { label: "YouTube & Instagram", to: "/social" },
+            { label: "Video Links", to: "/links" },
+          ]} />
+          <FooterCol title="Explore" links={[
+            { label: "Trending", to: "/#trending" },
+            { label: "Features", to: "/#features" },
+            { label: "Premium", to: "/#pricing" },
+            { label: "FAQ", to: "/#faq" },
+          ]} />
+          <FooterCol title="My account" links={[
+            { label: "Sign in", to: "/auth" },
             { label: "Dashboard", to: "/dashboard" },
-            { label: "Pricing", to: "/#pricing" },
-            { label: "Changelog", to: "/#" },
-          ]} />
-          <FooterCol title="Company" links={[
-            { label: "About", to: "/#" },
-            { label: "Blog", to: "/#" },
-            { label: "Contact", to: "/#" },
-            { label: "Careers", to: "/#" },
-          ]} />
-          <FooterCol title="Legal" links={[
-            { label: "Privacy", to: "/#" },
-            { label: "Terms", to: "/#" },
-            { label: "DMCA", to: "/#" },
-            { label: "Cookies", to: "/#" },
+            { label: "My downloads", to: "/downloads" },
+            { label: "Settings", to: "/settings" },
           ]} />
         </div>
 

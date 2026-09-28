@@ -22,10 +22,12 @@ export function SiteHeader() {
   }, []);
 
   const links = [
+    { to: "/", label: "Home" },
     { to: "/downloader", label: "Downloader" },
-    { to: "/#features", label: "Features" },
-    { to: "/#pricing", label: "Premium" },
-    { to: "/#faq", label: "FAQ" },
+    { to: "/#trending", label: "Trending" },
+    { to: "/social", label: "YouTube & Instagram" },
+    { to: "/links", label: "Video Links" },
+    { to: user ? "/dashboard" : "/auth", label: "My account" },
   ];
 
   return (
