@@ -10,7 +10,7 @@ import { resolveSocial } from "@/lib/social.functions";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/links")({
-  validateSearch: (s: Record<string, unknown>) => ({ url: typeof s.url === "string" ? s.url : undefined }),
+  validateSearch: (s: Record<string, unknown>): { url?: string } => (typeof s.url === "string" ? { url: s.url } : {}),
   head: () => ({
     meta: [
       { title: "Video link generator — EagerBeaver" },
