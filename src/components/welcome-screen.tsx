@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { z } from "zod";
+import { supabase } from "@/integrations/supabase/client";
 
 const NAME_KEY = "eb_username";
 const SESSION_KEY = "eb_welcomed";
@@ -19,12 +20,25 @@ export function WelcomeScreen() {
   const [leaving, setLeaving] = useState(false);
 
   useEffect(() => {
-    if (sessionStorage.getItem(SESSION_KEY)) return;
-    const saved = localStorage.getItem(NAME_KEY);
-    if (saved) {
-      setName(saved);
-      setMode("greet");
-    } else setMode("ask");
+    (async () => {
+      let saved = localStorage.getItem(NAME_KEY);
+      // Signed-in users: the account's name wins, so it follows them across devices.
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const { data } = await supabase.from("profiles").select("username").eq("id", session.user.id).maybeSingle();
+        if (data?.username) {
+          saved = data.username;
+          localStorage.setItem(NAME_KEY, saved);
+        } else if (saved) {
+          await supabase.from("profiles").update({ username: saved }).eq("id", session.user.id);
+        }
+      }
+      if (sessionStorage.getItem(SESSION_KEY)) return;
+      if (saved) {
+        setName(saved);
+        setMode("greet");
+      } else setMode("ask");
+    })();
   }, []);
 
   useEffect(() => {
@@ -39,11 +53,13 @@ export function WelcomeScreen() {
     setTimeout(() => setMode("hidden"), 400);
   }
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     const r = nameSchema.safeParse(input);
     if (!r.success) return setError(r.error.issues[0].message);
     localStorage.setItem(NAME_KEY, r.data);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) await supabase.from("profiles").update({ username: r.data }).eq("id", session.user.id);
     setName(r.data);
     setError(null);
     setMode("greet");

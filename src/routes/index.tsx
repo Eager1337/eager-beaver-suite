@@ -97,7 +97,7 @@ function Hero() {
 
 function TrendingSection() {
   return (
-    <section className="mx-auto max-w-7xl px-4 md:px-6 py-16 md:py-20">
+    <section id="trending" className="mx-auto max-w-7xl px-4 md:px-6 py-16 md:py-20 scroll-mt-20">
       <div className="flex items-end justify-between mb-8">
         <div>
           <div className="inline-flex items-center gap-2 rounded-full bg-accent/60 px-3 py-1 text-xs font-medium">
