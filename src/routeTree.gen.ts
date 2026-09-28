@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SocialRouteImport } from './routes/social'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as LinksRouteImport } from './routes/links'
 import { Route as DownloaderRouteImport } from './routes/downloader'
@@ -24,6 +25,11 @@ import { Route as AuthenticatedCollectionsRouteImport } from './routes/_authenti
 import { Route as ApiPublicMediaRouteImport } from './routes/api/public/media'
 import { Route as AuthenticatedDownloadsIdRouteImport } from './routes/_authenticated/downloads.$id'
 
+const SocialRoute = SocialRouteImport.update({
+  id: '/social',
+  path: '/social',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
@@ -102,6 +108,7 @@ export interface FileRoutesByFullPath {
   '/downloader': typeof DownloaderRoute
   '/links': typeof LinksRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/social': typeof SocialRoute
   '/collections': typeof AuthenticatedCollectionsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/downloads': typeof AuthenticatedDownloadsRouteWithChildren
@@ -117,6 +124,7 @@ export interface FileRoutesByTo {
   '/downloader': typeof DownloaderRoute
   '/links': typeof LinksRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/social': typeof SocialRoute
   '/collections': typeof AuthenticatedCollectionsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/downloads': typeof AuthenticatedDownloadsRouteWithChildren
@@ -134,6 +142,7 @@ export interface FileRoutesById {
   '/downloader': typeof DownloaderRoute
   '/links': typeof LinksRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/social': typeof SocialRoute
   '/_authenticated/collections': typeof AuthenticatedCollectionsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/downloads': typeof AuthenticatedDownloadsRouteWithChildren
@@ -151,6 +160,7 @@ export interface FileRouteTypes {
     | '/downloader'
     | '/links'
     | '/sitemap.xml'
+    | '/social'
     | '/collections'
     | '/dashboard'
     | '/downloads'
@@ -166,6 +176,7 @@ export interface FileRouteTypes {
     | '/downloader'
     | '/links'
     | '/sitemap.xml'
+    | '/social'
     | '/collections'
     | '/dashboard'
     | '/downloads'
@@ -182,6 +193,7 @@ export interface FileRouteTypes {
     | '/downloader'
     | '/links'
     | '/sitemap.xml'
+    | '/social'
     | '/_authenticated/collections'
     | '/_authenticated/dashboard'
     | '/_authenticated/downloads'
@@ -199,12 +211,20 @@ export interface RootRouteChildren {
   DownloaderRoute: typeof DownloaderRoute
   LinksRoute: typeof LinksRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  SocialRoute: typeof SocialRoute
   VCodeRoute: typeof VCodeRoute
   ApiPublicMediaRoute: typeof ApiPublicMediaRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/social': {
+      id: '/social'
+      path: '/social'
+      fullPath: '/social'
+      preLoaderRoute: typeof SocialRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sitemap.xml': {
       id: '/sitemap.xml'
       path: '/sitemap.xml'
@@ -346,6 +366,7 @@ const rootRouteChildren: RootRouteChildren = {
   DownloaderRoute: DownloaderRoute,
   LinksRoute: LinksRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  SocialRoute: SocialRoute,
   VCodeRoute: VCodeRoute,
   ApiPublicMediaRoute: ApiPublicMediaRoute,
 }
