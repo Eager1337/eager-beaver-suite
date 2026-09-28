@@ -105,7 +105,7 @@ export function WelcomeScreen() {
               >
                 Enter EagerBeaver
               </button>
-              <p className="text-xs text-muted-foreground">No login required · saved only on this device</p>
+              <p className="text-xs text-muted-foreground">No login required · sign in to keep your name on every device</p>
             </form>
           </>
         ) : (
