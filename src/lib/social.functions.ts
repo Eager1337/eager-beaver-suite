@@ -76,7 +76,7 @@ async function viaRapid(url: string, key: string): Promise<SocialVariant[] | nul
       url: m.url,
       kind: (m.type === "audio" ? "audio" : m.type === "image" ? "image" : "video") as SocialVariant["kind"],
     }));
-    const rank = (l: string) => Number(l.match(/(\d{3,4})p/i)?.[1] ?? l.match(/\b4k\b/i) ? 2160 : 0);
+    const rank = (l: string) => Number(l.match(/(\d{3,4})p/i)?.[1] ?? (l.match(/\b4k\b/i) ? 2160 : 0));
     return out.sort((a, b) => rank(b.label) - rank(a.label));
   } catch {
     return null;

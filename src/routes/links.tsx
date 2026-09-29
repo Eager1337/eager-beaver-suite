@@ -8,6 +8,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { resolveSocial } from "@/lib/social.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/links")({
   validateSearch: (s: Record<string, unknown>): { url?: string } => (typeof s.url === "string" ? { url: s.url } : {}),
@@ -31,6 +32,7 @@ function LinksPage() {
   const [url, setUrl] = useState(search.url ?? "");
   const [busy, setBusy] = useState(false);
   const [made, setMade] = useState<Made[]>([]);
+  const [latest, setLatest] = useState<string | null>(null);
   const resolve = useServerFn(resolveSocial);
 
   useEffect(() => {
@@ -56,10 +58,13 @@ function LinksPage() {
       if (error || !data) { toast.error("Couldn't create the link. Try again."); return; }
       const next = [data, ...made].slice(0, 30);
       setMade(next);
+      setLatest(data.code);
       localStorage.setItem("eb-links", JSON.stringify(next));
       await navigator.clipboard.writeText(share(data.code)).catch(() => {});
       toast.success("Link created and copied");
       setUrl("");
+    } catch {
+      toast.error("Couldn't create the link. Try again.");
     } finally {
       setBusy(false);
     }
@@ -78,11 +83,21 @@ function LinksPage() {
         <form onSubmit={make} className="mt-8 glass rounded-2xl p-2 flex gap-2 shadow-elegant">
           <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://…"
             className="flex-1 bg-transparent px-3 text-sm outline-none placeholder:text-muted-foreground" />
-          <button disabled={busy || !url.trim()}
+           <Button disabled={busy || !url.trim()}
             className="inline-flex items-center gap-2 rounded-xl bg-gradient-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-glow disabled:opacity-50">
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link2 className="h-4 w-4" />} Generate
-          </button>
+           </Button>
         </form>
+
+         {latest && (
+           <div className="mt-6 border border-border bg-card p-4 text-sm" role="status">
+             <p className="font-semibold">Your public video link is ready</p>
+             <div className="mt-2 flex items-center gap-2">
+               <a href={share(latest)} className="min-w-0 flex-1 truncate text-primary underline">{share(latest)}</a>
+               <Button variant="outline" size="icon" aria-label="Copy public link" title="Copy public link" onClick={() => { void navigator.clipboard.writeText(share(latest)); toast.success("Copied"); }}><Copy /></Button>
+             </div>
+           </div>
+         )}
 
         {made.length > 0 && (
           <div className="mt-10 space-y-2">
@@ -94,8 +109,8 @@ function LinksPage() {
                   <p className="truncate text-xs text-muted-foreground">/v/{m.code}</p>
                 </div>
                 <Link to="/v/$code" params={{ code: m.code }} className="rounded-lg border border-border p-2 hover:bg-accent/60" aria-label="Play"><Play className="h-4 w-4" /></Link>
-                <button onClick={() => { navigator.clipboard.writeText(share(m.code)); toast.success("Copied"); }}
-                  className="rounded-lg border border-border p-2 hover:bg-accent/60" aria-label="Copy link"><Copy className="h-4 w-4" /></button>
+                 <Button variant="outline" size="icon" onClick={() => { void navigator.clipboard.writeText(share(m.code)); toast.success("Copied"); }}
+                   aria-label="Copy link" title="Copy link"><Copy className="h-4 w-4" /></Button>
               </div>
             ))}
           </div>
