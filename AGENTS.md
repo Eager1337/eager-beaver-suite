@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Serve the Trending advert as a CDN-backed VP9 WebM with a frame from the video as its poster, because the previous local H.264 MP4 failed to decode in Chromium.
