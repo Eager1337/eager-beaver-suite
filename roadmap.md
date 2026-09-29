@@ -1,0 +1,4 @@
+- [ ] Keep the KK Advertisement playing muted on a loop, including after playback interruptions.
+- [ ] Verify RapidAPI-backed YouTube full-video resolution and show available 2160p files.
+- [ ] Make public saved video links reliably playable with a fallback when direct playback fails.
+- [ ] Show the cross-device sign-in message in the welcome screen and verify it in preview.
