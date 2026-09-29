@@ -8,16 +8,15 @@ import {
   TrendingUp, ChevronRight, Check, Star,
 } from "lucide-react";
 import { useState } from "react";
-import owner from "@/assets/owner.jpg.asset.json";
 import freetown from "@/assets/sl-freetown.jpg";
 import beach from "@/assets/sl-beach.jpg";
 import market from "@/assets/sl-market.jpg";
-import kkAdvert from "@/assets/kk-advert.mp4";
+import kkAdvert from "@/assets/kk-advert.webm.asset.json";
+import kkPoster from "@/assets/kk-advert-poster.jpg.asset.json";
 
 const slMedia: { title: string; creator: string; src: string; video?: string }[] = [
-  { title: "KK Advertisement", creator: "@eagerbeaver", src: owner.url, video: kkAdvert },
+  { title: "KK Advertisement", creator: "@eagerbeaver", src: kkPoster.url, video: kkAdvert.url },
   { title: "Freetown at golden hour", creator: "@salone.views", src: freetown },
-  { title: "Founder of EagerBeaver", creator: "@eagerbeaver", src: owner.url },
   { title: "River No. 2 Beach", creator: "@visit.salone", src: beach },
   { title: "Market day in Freetown", creator: "@sweet.salone", src: market },
 ];
@@ -119,7 +118,7 @@ function TrendingSection() {
           <div key={m.title} className="mb-4 break-inside-avoid group animate-fade-up" style={{ animationDelay: `${i * 40}ms` }}>
             <div className="relative overflow-hidden rounded-2xl shadow-elegant transition-transform group-hover:-translate-y-1">
               {m.video ? (
-                <video src={m.video} poster={m.src} autoPlay muted loop playsInline className="w-full object-cover" />
+                <video src={m.video} poster={m.src} autoPlay muted loop playsInline preload="auto" aria-label={m.title} className="w-full object-cover" />
               ) : (
                 <img src={m.src} alt={m.title} loading="lazy" className="w-full object-cover animate-kenburns" />
               )}
