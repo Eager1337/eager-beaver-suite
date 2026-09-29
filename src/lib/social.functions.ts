@@ -69,12 +69,14 @@ async function viaRapid(url: string, key: string): Promise<SocialVariant[] | nul
     });
     if (!r.ok) return null;
     const j = (await r.json()) as { medias?: { url: string; quality?: string; type?: string; extension?: string }[] };
-    const out = (j.medias ?? []).map((m) => ({
+    const out = (j.medias ?? []).filter((m) => {
+      try { return new URL(m.url).protocol === "https:"; } catch { return false; }
+    }).map((m) => ({
       label: `${(m.extension ?? m.type ?? "file").toUpperCase()} · ${m.quality ?? "Original"}`,
       url: m.url,
       kind: (m.type === "audio" ? "audio" : m.type === "image" ? "image" : "video") as SocialVariant["kind"],
     }));
-    const rank = (l: string) => Number(l.match(/(\d{3,4})p/)?.[1] ?? 0);
+    const rank = (l: string) => Number(l.match(/(\d{3,4})p/i)?.[1] ?? (l.match(/\b4k\b/i) ? 2160 : 0));
     return out.sort((a, b) => rank(b.label) - rank(a.label));
   } catch {
     return null;
@@ -145,7 +147,7 @@ export async function resolveAnyVideo(url: string): Promise<SocialResult> {
     if (paid?.length || code) {
       return {
         ok: true, platform, title: "Instagram post", author: null, cover: null,
-        embedUrl: code ? `https://www.instagram.com/p/${code}/embed` : null,
+        embedUrl: code ? `https://www.instagram.com/${url.includes("/reel/") ? "reel" : "p"}/${code}/embed` : null,
         variants: paid ?? [],
         note: paid?.length ? undefined : "Instagram video files turn on once the download service key is added.",
       };

@@ -114,6 +114,7 @@ export function WelcomeScreen() {
               Welcome back, <span className="text-gradient">{name}</span>!
             </h1>
             <p className="mt-3 text-muted-foreground">Kushe o! No login required — just paste and download.</p>
+            <p className="mt-2 text-xs text-muted-foreground">Sign in to keep your name on every device.</p>
             <button
               onClick={close}
               className="mt-8 rounded-full bg-gradient-primary px-8 py-3 font-semibold text-primary-foreground shadow-glow transition-transform hover:scale-[1.03]"
