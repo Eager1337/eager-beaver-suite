@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   LayoutDashboard, Download, Heart, FolderHeart, Settings,
-  Sparkles, LogOut, Search, ChevronRight,
+  Sparkles, LogOut, Search, ChevronRight, UserRound,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notification-bell";
 import { toast } from "sonner";
@@ -22,6 +22,7 @@ export const Route = createFileRoute("/_authenticated")({
 
 const navItems = [
   { to: "/dashboard", label: "Overview", icon: LayoutDashboard },
+  { to: "/account", label: "My account", icon: UserRound },
   { to: "/downloads", label: "Downloads", icon: Download },
   { to: "/favorites", label: "Favorites", icon: Heart },
   { to: "/collections", label: "Collections", icon: FolderHeart },
