@@ -27,7 +27,7 @@ export function SiteHeader() {
     { to: "/#trending", label: "Trending" },
     { to: "/social", label: "YouTube & Instagram" },
     { to: "/links", label: "Video Links" },
-    { to: user ? "/dashboard" : "/auth", label: "My account" },
+    { to: user ? "/account" : "/auth", label: "My account" },
   ];
 
   return (
@@ -66,7 +66,7 @@ export function SiteHeader() {
 
             {user ? (
               <Button
-                onClick={() => navigate({ to: "/dashboard" })}
+                onClick={() => navigate({ to: "/account" })}
                 className="rounded-full bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-90"
               >
                 Dashboard
