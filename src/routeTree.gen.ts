@@ -22,6 +22,7 @@ import { Route as AuthenticatedFavoritesRouteImport } from './routes/_authentica
 import { Route as AuthenticatedDownloadsRouteImport } from './routes/_authenticated/downloads'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCollectionsRouteImport } from './routes/_authenticated/collections'
+import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as ApiPublicMediaRouteImport } from './routes/api/public/media'
 import { Route as AuthenticatedDownloadsIdRouteImport } from './routes/_authenticated/downloads.$id'
 
@@ -90,6 +91,11 @@ const AuthenticatedCollectionsRoute =
     path: '/collections',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const ApiPublicMediaRoute = ApiPublicMediaRouteImport.update({
   id: '/api/public/media',
   path: '/api/public/media',
@@ -109,6 +115,7 @@ export interface FileRoutesByFullPath {
   '/links': typeof LinksRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/social': typeof SocialRoute
+  '/account': typeof AuthenticatedAccountRoute
   '/collections': typeof AuthenticatedCollectionsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/downloads': typeof AuthenticatedDownloadsRouteWithChildren
@@ -125,6 +132,7 @@ export interface FileRoutesByTo {
   '/links': typeof LinksRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/social': typeof SocialRoute
+  '/account': typeof AuthenticatedAccountRoute
   '/collections': typeof AuthenticatedCollectionsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/downloads': typeof AuthenticatedDownloadsRouteWithChildren
@@ -143,6 +151,7 @@ export interface FileRoutesById {
   '/links': typeof LinksRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/social': typeof SocialRoute
+  '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/_authenticated/collections': typeof AuthenticatedCollectionsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/downloads': typeof AuthenticatedDownloadsRouteWithChildren
@@ -161,6 +170,7 @@ export interface FileRouteTypes {
     | '/links'
     | '/sitemap.xml'
     | '/social'
+    | '/account'
     | '/collections'
     | '/dashboard'
     | '/downloads'
@@ -177,6 +187,7 @@ export interface FileRouteTypes {
     | '/links'
     | '/sitemap.xml'
     | '/social'
+    | '/account'
     | '/collections'
     | '/dashboard'
     | '/downloads'
@@ -194,6 +205,7 @@ export interface FileRouteTypes {
     | '/links'
     | '/sitemap.xml'
     | '/social'
+    | '/_authenticated/account'
     | '/_authenticated/collections'
     | '/_authenticated/dashboard'
     | '/_authenticated/downloads'
@@ -309,6 +321,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCollectionsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/account': {
+      id: '/_authenticated/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AuthenticatedAccountRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/media': {
       id: '/api/public/media'
       path: '/api/public/media'
@@ -341,6 +360,7 @@ const AuthenticatedDownloadsRouteWithChildren =
   )
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAccountRoute: typeof AuthenticatedAccountRoute
   AuthenticatedCollectionsRoute: typeof AuthenticatedCollectionsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDownloadsRoute: typeof AuthenticatedDownloadsRouteWithChildren
@@ -349,6 +369,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAccountRoute: AuthenticatedAccountRoute,
   AuthenticatedCollectionsRoute: AuthenticatedCollectionsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDownloadsRoute: AuthenticatedDownloadsRouteWithChildren,
