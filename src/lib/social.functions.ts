@@ -167,14 +167,14 @@ export async function resolveAnyVideo(url: string): Promise<SocialResult> {
     if (!o.ok) return { ok: false, error: "That video is private or doesn't exist." };
     const j = (await o.json()) as { title: string; author_name: string };
     const cover = `https://i.ytimg.com/vi/${id}/maxresdefault.jpg`;
-    const paid = key ? ((await viaYtMedia(id, key)) ?? (await viaRapid(url, key))) : null;
+    const paid = key ? await viaRapid(url, key) : null;
     return {
       ok: true, platform, title: j.title, author: j.author_name, cover,
       embedUrl: `https://www.youtube.com/embed/${id}`,
       variants: [...(paid ?? []), { label: "JPG · HD cover", url: cover, kind: "image" }],
       note: paid?.length
         ? "YouTube keeps sound separate on higher qualities — files marked \"no sound\" are picture only; use \"with sound\" or the M4A sound file."
-        : "Full YouTube video files couldn't be loaded right now. Try again in a moment.",
+        : "Full YouTube video downloads aren't available yet — you can watch it here and save the cover picture.",
     };
   }
 
