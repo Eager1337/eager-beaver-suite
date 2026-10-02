@@ -55,6 +55,41 @@ async function viaTikwm(url: string): Promise<SocialResult> {
   };
 }
 
+/** RapidAPI "YouTube Media Downloader" (free Basic plan) — full YouTube files up to 2160p. */
+async function viaYtMedia(id: string, key: string): Promise<SocialVariant[] | null> {
+  try {
+    const r = await fetch(`https://youtube-media-downloader.p.rapidapi.com/v2/video/details?videoId=${id}`, {
+      headers: { "x-rapidapi-key": key, "x-rapidapi-host": "youtube-media-downloader.p.rapidapi.com" },
+    });
+    if (!r.ok) return null;
+    type Item = { url: string; quality?: string; extension?: string; hasAudio?: boolean; sizeText?: string };
+    const j = (await r.json()) as { errorId?: string; videos?: { items?: Item[] }; audios?: { items?: Item[] } };
+    if (j.errorId !== "Success") return null;
+    const rank = (q?: string) => Number(q?.match(/(\d{3,4})p/)?.[1] ?? 0);
+    const seen = new Set<string>();
+    const vids = (j.videos?.items ?? [])
+      .filter((v) => v.extension === "mp4" && v.url?.startsWith("https://"))
+      .sort((a, b) => Number(!!b.hasAudio) - Number(!!a.hasAudio) || rank(b.quality) - rank(a.quality))
+      .filter((v) => {
+        const k = `${v.quality}-${v.hasAudio}`;
+        if (seen.has(k)) return false;
+        seen.add(k);
+        return true;
+      })
+      .sort((a, b) => rank(b.quality) - rank(a.quality))
+      .map((v) => ({
+        label: `MP4 · ${v.quality}${v.hasAudio ? " · with sound" : " · no sound"}${v.sizeText ? ` · ${v.sizeText}` : ""}`,
+        url: v.url,
+        kind: "video" as const,
+      }));
+    const audio = (j.audios?.items ?? []).filter((a) => a.extension === "m4a").sort((a, b) => parseFloat(b.sizeText ?? "0") - parseFloat(a.sizeText ?? "0"))[0];
+    if (audio) vids.push({ label: `M4A · Sound only${audio.sizeText ? ` · ${audio.sizeText}` : ""}`, url: audio.url, kind: "video" });
+    return vids.length ? vids : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Optional paid all-in-one service (YouTube 4K, Instagram, etc.) — used when RAPIDAPI_KEY is set. */
 async function viaRapid(url: string, key: string): Promise<SocialVariant[] | null> {
   try {
@@ -132,12 +167,14 @@ export async function resolveAnyVideo(url: string): Promise<SocialResult> {
     if (!o.ok) return { ok: false, error: "That video is private or doesn't exist." };
     const j = (await o.json()) as { title: string; author_name: string };
     const cover = `https://i.ytimg.com/vi/${id}/maxresdefault.jpg`;
-    const paid = key ? await viaRapid(url, key) : null;
+    const paid = key ? ((await viaYtMedia(id, key)) ?? (await viaRapid(url, key))) : null;
     return {
       ok: true, platform, title: j.title, author: j.author_name, cover,
       embedUrl: `https://www.youtube.com/embed/${id}`,
       variants: [...(paid ?? []), { label: "JPG · HD cover", url: cover, kind: "image" }],
-      note: paid?.length ? undefined : "Full YouTube video files (up to 2160p) turn on once the download service key is added.",
+      note: paid?.length
+        ? "YouTube keeps sound separate on higher qualities — files marked \"no sound\" are picture only; use \"with sound\" or the M4A sound file."
+        : "Full YouTube video files couldn't be loaded right now. Try again in a moment.",
     };
   }
 
