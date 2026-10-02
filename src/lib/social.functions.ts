@@ -67,7 +67,7 @@ async function viaYtMedia(id: string, key: string): Promise<SocialVariant[] | nu
     if (j.errorId !== "Success") return null;
     const rank = (q?: string) => Number(q?.match(/(\d{3,4})p/)?.[1] ?? 0);
     const seen = new Set<string>();
-    const vids = (j.videos?.items ?? [])
+    const vids: SocialVariant[] = (j.videos?.items ?? [])
       .filter((v) => v.extension === "mp4" && v.url?.startsWith("https://"))
       .sort((a, b) => Number(!!b.hasAudio) - Number(!!a.hasAudio) || rank(b.quality) - rank(a.quality))
       .filter((v) => {
@@ -83,7 +83,7 @@ async function viaYtMedia(id: string, key: string): Promise<SocialVariant[] | nu
         kind: "video" as const,
       }));
     const audio = (j.audios?.items ?? []).filter((a) => a.extension === "m4a").sort((a, b) => parseFloat(b.sizeText ?? "0") - parseFloat(a.sizeText ?? "0"))[0];
-    if (audio) vids.push({ label: `M4A · Sound only${audio.sizeText ? ` · ${audio.sizeText}` : ""}`, url: audio.url, kind: "video" });
+    if (audio) vids.push({ label: `M4A · Sound only${audio.sizeText ? ` · ${audio.sizeText}` : ""}`, url: audio.url, kind: "audio" as const } as SocialVariant);
     return vids.length ? vids : null;
   } catch {
     return null;
