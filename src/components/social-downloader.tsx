@@ -55,7 +55,7 @@ export function SocialMode() {
     toast.success("Saved to your Downloads");
   }
 
-  const firstVideo = res?.variants.find((v) => v.kind === "video");
+  const firstVideo = res?.variants.find((v) => v.kind === "video" && v.label.includes("with sound")) ?? res?.variants.find((v) => v.kind === "video");
 
   return (
     <>
