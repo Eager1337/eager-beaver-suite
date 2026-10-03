@@ -36,6 +36,12 @@ export function SocialMode() {
 
   async function save(v: Ok["variants"][number]) {
     if (!res) return;
+    try {
+      const list = JSON.parse(localStorage.getItem("eb-local-downloads") ?? "[]");
+      list.unshift({ id: crypto.randomUUID(), title: res.title, mediaType: v.kind === "image" ? "image" : "video", label: v.label, preview: res.cover, mediaUrl: v.url, at: Date.now() });
+      localStorage.setItem("eb-local-downloads", JSON.stringify(list.slice(0, 30)));
+      window.dispatchEvent(new StorageEvent("storage", { key: "eb-local-downloads" }));
+    } catch { /* storage full or blocked */ }
     const { data } = await supabase.auth.getUser();
     if (!data.user) return;
     await supabase.from("downloads").insert({

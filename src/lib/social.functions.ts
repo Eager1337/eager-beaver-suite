@@ -55,6 +55,52 @@ async function viaTikwm(url: string): Promise<SocialResult> {
   };
 }
 
+/** Self-hosted Cobalt server (COBALT_API_URL, optional COBALT_API_KEY) — YouTube up to 2160p, TikTok, Instagram. */
+async function cobaltOnce(url: string, quality: string): Promise<{ status: string; url?: string; filename?: string; picker?: { type: string; url: string; thumb?: string }[] } | null> {
+  const base = process.env["COBALT_API_URL"];
+  if (!base) return null;
+  const key = process.env["COBALT_API_KEY"];
+  try {
+    const r = await fetch(base.replace(/\/$/, "") + "/", {
+      method: "POST",
+      headers: { Accept: "application/json", "Content-Type": "application/json", ...(key ? { Authorization: `Api-Key ${key}` } : {}) },
+      body: JSON.stringify({ url, videoQuality: quality, downloadMode: "auto", filenameStyle: "basic" }),
+    });
+    return (await r.json()) as never;
+  } catch {
+    return null;
+  }
+}
+
+async function viaCobalt(url: string, youtube: boolean): Promise<SocialVariant[] | null> {
+  if (!process.env["COBALT_API_URL"]) return null;
+  const qualities = youtube ? ["2160", "1440", "1080", "720", "480"] : ["max"];
+  const results = await Promise.all(qualities.map((q) => cobaltOnce(url, q)));
+  const out: SocialVariant[] = [];
+  results.forEach((res, i) => {
+    if (!res) return;
+    if ((res.status === "tunnel" || res.status === "redirect") && res.url) {
+      const q = qualities[i];
+      out.push({ label: `MP4 · ${q === "max" ? "Best quality" : `${q}p`} (with sound)`, url: res.url, kind: "video" });
+    } else if (res.status === "picker" && res.picker) {
+      res.picker.forEach((p, n) => out.push({ label: `${p.type === "photo" ? "JPG · Photo" : "MP4 · Video"} ${n + 1}`, url: p.url, kind: p.type === "photo" ? "image" : "video" }));
+    }
+  });
+  const audio = await (async () => {
+    const base = process.env["COBALT_API_URL"]!;
+    const key = process.env["COBALT_API_KEY"];
+    const r = await fetch(base.replace(/\/$/, "") + "/", {
+      method: "POST",
+      headers: { Accept: "application/json", "Content-Type": "application/json", ...(key ? { Authorization: `Api-Key ${key}` } : {}) },
+      body: JSON.stringify({ url, downloadMode: "audio", audioFormat: "mp3" }),
+    }).catch(() => null);
+    return (await r?.json().catch(() => null)) as { status?: string; url?: string } | null;
+  })();
+  if (audio?.url && (audio.status === "tunnel" || audio.status === "redirect")) out.push({ label: "MP3 · Sound only", url: audio.url, kind: "audio" });
+  const seen = new Set<string>();
+  return out.filter((v) => (seen.has(v.label) ? false : (seen.add(v.label), true))).length ? out : null;
+}
+
 /** RapidAPI "YouTube Media Downloader" (free Basic plan) — full YouTube files up to 2160p. */
 async function viaYtMedia(id: string, key: string): Promise<SocialVariant[] | null> {
   try {
@@ -158,6 +204,18 @@ async function scrapeWeb(url: string): Promise<SocialResult> {
 export async function resolveAnyVideo(url: string): Promise<SocialResult> {
   const platform = detectPlatform(url);
   const key = process.env["RAPIDAPI_KEY"];
+  if (platform !== "web") {
+    const cob = await viaCobalt(url, platform === "youtube");
+    if (cob?.length) {
+      const id = platform === "youtube" ? ytId(url) : null;
+      const cover = id ? `https://i.ytimg.com/vi/${id}/maxresdefault.jpg` : null;
+      return {
+        ok: true, platform, title: `${platform[0].toUpperCase()}${platform.slice(1)} video`, author: null, cover,
+        embedUrl: id ? `https://www.youtube.com/embed/${id}` : null,
+        variants: cover ? [...cob, { label: "JPG · HD cover", url: cover, kind: "image" }] : cob,
+      };
+    }
+  }
   if (platform === "tiktok") return viaTikwm(url);
 
   if (platform === "youtube") {
