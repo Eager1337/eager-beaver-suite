@@ -258,7 +258,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      browse_feed: {
+        Args: { _limit?: number; _offset?: number; _type?: string }
+        Returns: {
+          author_name: string
+          created_at: string
+          height: number
+          id: string
+          media_type: string
+          media_url: string
+          preview_url: string
+          thumbnail_url: string
+          title: string
+          width: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

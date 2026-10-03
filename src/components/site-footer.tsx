@@ -36,6 +36,7 @@ export function SiteFooter() {
             { label: "Home", to: "/" },
             { label: "Pinterest downloader", to: "/downloader" },
             { label: "YouTube & Instagram", to: "/social" },
+            { label: "Browse", to: "/browse" },
             { label: "Video Links", to: "/links" },
           ]} />
           <FooterCol title="Explore" links={[
