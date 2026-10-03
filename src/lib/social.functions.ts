@@ -86,7 +86,7 @@ async function viaCobalt(url: string, youtube: boolean): Promise<SocialVariant[]
       res.picker.forEach((p, n) => out.push({ label: `${p.type === "photo" ? "JPG · Photo" : "MP4 · Video"} ${n + 1}`, url: p.url, kind: p.type === "photo" ? "image" : "video" }));
     }
   });
-  const audio = await cobaltOnce(url, "max").then(async () => {
+  const audio = await (async () => {
     const base = process.env["COBALT_API_URL"]!;
     const key = process.env["COBALT_API_KEY"];
     const r = await fetch(base.replace(/\/$/, "") + "/", {
@@ -95,7 +95,7 @@ async function viaCobalt(url: string, youtube: boolean): Promise<SocialVariant[]
       body: JSON.stringify({ url, downloadMode: "audio", audioFormat: "mp3" }),
     }).catch(() => null);
     return (await r?.json().catch(() => null)) as { status?: string; url?: string } | null;
-  });
+  })();
   if (audio?.url && (audio.status === "tunnel" || audio.status === "redirect")) out.push({ label: "MP3 · Sound only", url: audio.url, kind: "audio" });
   const seen = new Set<string>();
   return out.filter((v) => (seen.has(v.label) ? false : (seen.add(v.label), true))).length ? out : null;
@@ -204,6 +204,18 @@ async function scrapeWeb(url: string): Promise<SocialResult> {
 export async function resolveAnyVideo(url: string): Promise<SocialResult> {
   const platform = detectPlatform(url);
   const key = process.env["RAPIDAPI_KEY"];
+  if (platform !== "web") {
+    const cob = await viaCobalt(url, platform === "youtube");
+    if (cob?.length) {
+      const id = platform === "youtube" ? ytId(url) : null;
+      const cover = id ? `https://i.ytimg.com/vi/${id}/maxresdefault.jpg` : null;
+      return {
+        ok: true, platform, title: `${platform[0].toUpperCase()}${platform.slice(1)} video`, author: null, cover,
+        embedUrl: id ? `https://www.youtube.com/embed/${id}` : null,
+        variants: cover ? [...cob, { label: "JPG · HD cover", url: cover, kind: "image" }] : cob,
+      };
+    }
+  }
   if (platform === "tiktok") return viaTikwm(url);
 
   if (platform === "youtube") {
