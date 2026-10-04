@@ -60,7 +60,7 @@ function BrowsePage() {
       const seen = new Set<string>();
       return ((data ?? []) as Item[]).filter((i) => {
         const k = i.media_url ?? i.id;
-        if (seen.has(k)) return false;
+        if (seen.has(k) || /tiktokcdn|googlevideo|tikwm/.test(k)) return false; // signed links expire
         seen.add(k);
         return true;
       });
