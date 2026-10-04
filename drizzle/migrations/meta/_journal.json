@@ -15,6 +15,13 @@
       "when": 1791071900342,
       "tag": "0001_public_browse_feed",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791158271999,
+      "tag": "0002_support_and_collections",
+      "breakpoints": true
     }
   ]
 }
