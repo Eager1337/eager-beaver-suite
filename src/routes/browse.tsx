@@ -57,7 +57,13 @@ function BrowsePage() {
     queryFn: async () => {
       const { data, error } = await supabase.rpc("browse_feed", { _limit: 90, _offset: 0, _type: type ?? undefined });
       if (error) throw error;
-      return (data ?? []) as Item[];
+      const seen = new Set<string>();
+      return ((data ?? []) as Item[]).filter((i) => {
+        const k = i.media_url ?? i.id;
+        if (seen.has(k) || /tiktokcdn|googlevideo|tikwm/.test(k)) return false; // signed links expire
+        seen.add(k);
+        return true;
+      });
     },
   });
 
