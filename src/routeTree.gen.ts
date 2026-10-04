@@ -11,13 +11,19 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SocialRouteImport } from './routes/social'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as LinksRouteImport } from './routes/links'
+import { Route as HelpRouteImport } from './routes/help'
 import { Route as DownloaderRouteImport } from './routes/downloader'
 import { Route as BrowseRouteImport } from './routes/browse'
+import { Route as BlogRouteImport } from './routes/blog'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AiRouteImport } from './routes/ai'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as VCodeRouteImport } from './routes/v.$code'
+import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedFavoritesRouteImport } from './routes/_authenticated/favorites'
 import { Route as AuthenticatedDownloadsRouteImport } from './routes/_authenticated/downloads'
@@ -37,9 +43,19 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LinksRoute = LinksRouteImport.update({
   id: '/links',
   path: '/links',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HelpRoute = HelpRouteImport.update({
+  id: '/help',
+  path: '/help',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DownloaderRoute = DownloaderRouteImport.update({
@@ -52,9 +68,19 @@ const BrowseRoute = BrowseRouteImport.update({
   path: '/browse',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BlogRoute = BlogRouteImport.update({
+  id: '/blog',
+  path: '/blog',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AiRoute = AiRouteImport.update({
+  id: '/ai',
+  path: '/ai',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
@@ -66,10 +92,20 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BlogIndexRoute = BlogIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => BlogRoute,
+} as any)
 const VCodeRoute = VCodeRouteImport.update({
   id: '/v/$code',
   path: '/v/$code',
   getParentRoute: () => rootRouteImport,
+} as any)
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => BlogRoute,
 } as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
@@ -116,10 +152,14 @@ const AuthenticatedDownloadsIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/ai': typeof AiRoute
   '/auth': typeof AuthRoute
+  '/blog': typeof BlogRouteWithChildren
   '/browse': typeof BrowseRoute
   '/downloader': typeof DownloaderRoute
+  '/help': typeof HelpRoute
   '/links': typeof LinksRoute
+  '/pricing': typeof PricingRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/social': typeof SocialRoute
   '/account': typeof AuthenticatedAccountRoute
@@ -128,16 +168,21 @@ export interface FileRoutesByFullPath {
   '/downloads': typeof AuthenticatedDownloadsRouteWithChildren
   '/favorites': typeof AuthenticatedFavoritesRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/v/$code': typeof VCodeRoute
+  '/blog/': typeof BlogIndexRoute
   '/downloads/$id': typeof AuthenticatedDownloadsIdRoute
   '/api/public/media': typeof ApiPublicMediaRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/ai': typeof AiRoute
   '/auth': typeof AuthRoute
   '/browse': typeof BrowseRoute
   '/downloader': typeof DownloaderRoute
+  '/help': typeof HelpRoute
   '/links': typeof LinksRoute
+  '/pricing': typeof PricingRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/social': typeof SocialRoute
   '/account': typeof AuthenticatedAccountRoute
@@ -146,7 +191,9 @@ export interface FileRoutesByTo {
   '/downloads': typeof AuthenticatedDownloadsRouteWithChildren
   '/favorites': typeof AuthenticatedFavoritesRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/v/$code': typeof VCodeRoute
+  '/blog': typeof BlogIndexRoute
   '/downloads/$id': typeof AuthenticatedDownloadsIdRoute
   '/api/public/media': typeof ApiPublicMediaRoute
 }
@@ -154,10 +201,14 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/ai': typeof AiRoute
   '/auth': typeof AuthRoute
+  '/blog': typeof BlogRouteWithChildren
   '/browse': typeof BrowseRoute
   '/downloader': typeof DownloaderRoute
+  '/help': typeof HelpRoute
   '/links': typeof LinksRoute
+  '/pricing': typeof PricingRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/social': typeof SocialRoute
   '/_authenticated/account': typeof AuthenticatedAccountRoute
@@ -166,7 +217,9 @@ export interface FileRoutesById {
   '/_authenticated/downloads': typeof AuthenticatedDownloadsRouteWithChildren
   '/_authenticated/favorites': typeof AuthenticatedFavoritesRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/v/$code': typeof VCodeRoute
+  '/blog/': typeof BlogIndexRoute
   '/_authenticated/downloads/$id': typeof AuthenticatedDownloadsIdRoute
   '/api/public/media': typeof ApiPublicMediaRoute
 }
@@ -174,10 +227,14 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/ai'
     | '/auth'
+    | '/blog'
     | '/browse'
     | '/downloader'
+    | '/help'
     | '/links'
+    | '/pricing'
     | '/sitemap.xml'
     | '/social'
     | '/account'
@@ -186,16 +243,21 @@ export interface FileRouteTypes {
     | '/downloads'
     | '/favorites'
     | '/settings'
+    | '/blog/$slug'
     | '/v/$code'
+    | '/blog/'
     | '/downloads/$id'
     | '/api/public/media'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/ai'
     | '/auth'
     | '/browse'
     | '/downloader'
+    | '/help'
     | '/links'
+    | '/pricing'
     | '/sitemap.xml'
     | '/social'
     | '/account'
@@ -204,17 +266,23 @@ export interface FileRouteTypes {
     | '/downloads'
     | '/favorites'
     | '/settings'
+    | '/blog/$slug'
     | '/v/$code'
+    | '/blog'
     | '/downloads/$id'
     | '/api/public/media'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/ai'
     | '/auth'
+    | '/blog'
     | '/browse'
     | '/downloader'
+    | '/help'
     | '/links'
+    | '/pricing'
     | '/sitemap.xml'
     | '/social'
     | '/_authenticated/account'
@@ -223,7 +291,9 @@ export interface FileRouteTypes {
     | '/_authenticated/downloads'
     | '/_authenticated/favorites'
     | '/_authenticated/settings'
+    | '/blog/$slug'
     | '/v/$code'
+    | '/blog/'
     | '/_authenticated/downloads/$id'
     | '/api/public/media'
   fileRoutesById: FileRoutesById
@@ -231,10 +301,14 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AiRoute: typeof AiRoute
   AuthRoute: typeof AuthRoute
+  BlogRoute: typeof BlogRouteWithChildren
   BrowseRoute: typeof BrowseRoute
   DownloaderRoute: typeof DownloaderRoute
+  HelpRoute: typeof HelpRoute
   LinksRoute: typeof LinksRoute
+  PricingRoute: typeof PricingRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SocialRoute: typeof SocialRoute
   VCodeRoute: typeof VCodeRoute
@@ -257,11 +331,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/links': {
       id: '/links'
       path: '/links'
       fullPath: '/links'
       preLoaderRoute: typeof LinksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/help': {
+      id: '/help'
+      path: '/help'
+      fullPath: '/help'
+      preLoaderRoute: typeof HelpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/downloader': {
@@ -278,11 +366,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BrowseRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/blog': {
+      id: '/blog'
+      path: '/blog'
+      fullPath: '/blog'
+      preLoaderRoute: typeof BlogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ai': {
+      id: '/ai'
+      path: '/ai'
+      fullPath: '/ai'
+      preLoaderRoute: typeof AiRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -299,12 +401,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/blog/': {
+      id: '/blog/'
+      path: '/'
+      fullPath: '/blog/'
+      preLoaderRoute: typeof BlogIndexRouteImport
+      parentRoute: typeof BlogRoute
+    }
     '/v/$code': {
       id: '/v/$code'
       path: '/v/$code'
       fullPath: '/v/$code'
       preLoaderRoute: typeof VCodeRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/blog/$slug': {
+      id: '/blog/$slug'
+      path: '/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
+      parentRoute: typeof BlogRoute
     }
     '/_authenticated/settings': {
       id: '/_authenticated/settings'
@@ -400,13 +516,29 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface BlogRouteChildren {
+  BlogSlugRoute: typeof BlogSlugRoute
+  BlogIndexRoute: typeof BlogIndexRoute
+}
+
+const BlogRouteChildren: BlogRouteChildren = {
+  BlogSlugRoute: BlogSlugRoute,
+  BlogIndexRoute: BlogIndexRoute,
+}
+
+const BlogRouteWithChildren = BlogRoute._addFileChildren(BlogRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AiRoute: AiRoute,
   AuthRoute: AuthRoute,
+  BlogRoute: BlogRouteWithChildren,
   BrowseRoute: BrowseRoute,
   DownloaderRoute: DownloaderRoute,
+  HelpRoute: HelpRoute,
   LinksRoute: LinksRoute,
+  PricingRoute: PricingRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   SocialRoute: SocialRoute,
   VCodeRoute: VCodeRoute,
