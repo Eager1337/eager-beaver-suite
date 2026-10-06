@@ -27,6 +27,7 @@ export function SiteHeader() {
     { to: "/#trending", label: "Trending" },
     { to: "/social", label: "YouTube & Instagram" },
     { to: "/browse", label: "Browse" },
+    { to: "/ai", label: "AI Studio" },
     { to: "/links", label: "Video Links" },
     { to: user ? "/account" : "/auth", label: "My account" },
   ];
@@ -44,12 +45,12 @@ export function SiteHeader() {
             </span>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden lg:flex items-center gap-0.5">
             {links.map((l) => (
               <a
                 key={l.to}
                 href={l.to}
-                className="rounded-full px-4 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground hover:bg-accent/50"
+                className="whitespace-nowrap rounded-full px-2.5 py-1.5 text-[13px] text-muted-foreground transition-colors hover:text-foreground hover:bg-accent/50"
               >
                 {l.label}
               </a>
@@ -76,14 +77,14 @@ export function SiteHeader() {
               <>
                 <Link
                   to="/auth"
-                  className="hidden sm:inline-flex rounded-full px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                  className="hidden sm:inline-flex whitespace-nowrap rounded-full px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
                 >
                   Sign in
                 </Link>
                 <Link
                   to="/auth"
                   search={{ mode: "signup" }}
-                  className="inline-flex rounded-full bg-gradient-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-glow transition-transform hover:scale-[1.03]"
+                  className="inline-flex whitespace-nowrap rounded-full bg-gradient-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-glow transition-transform hover:scale-[1.03]"
                 >
                   Get started
                 </Link>
@@ -92,7 +93,7 @@ export function SiteHeader() {
 
             <button
               onClick={() => setOpen(!open)}
-              className="md:hidden grid h-9 w-9 place-items-center rounded-full border border-border"
+              className="lg:hidden grid h-9 w-9 place-items-center rounded-full border border-border"
               aria-label="Menu"
             >
               <Menu className="h-4 w-4" />
@@ -101,7 +102,7 @@ export function SiteHeader() {
         </div>
 
         {open && (
-          <div className="md:hidden border-t border-border/40 px-4 py-3 space-y-1">
+          <div className="lg:hidden border-t border-border/40 px-4 py-3 space-y-1">
             {links.map((l) => (
               <a
                 key={l.to}

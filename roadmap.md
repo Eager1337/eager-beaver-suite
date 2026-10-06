@@ -3,5 +3,7 @@
 - [ ] Make public saved video links reliably playable with a fallback when direct playback fails.
 - [ ] Show the cross-device sign-in message in the welcome screen and verify it in preview.
 - [x] Pinterest-style browse page
+- [x] AI Studio (captions, pictures, trends, chat) tested
+- [x] Collections with folders + drag and drop
 - [ ] Email alerts — waiting on user's own domain
 - [ ] Cobalt YouTube/TikTok/Instagram — waiting on user's Render server address
