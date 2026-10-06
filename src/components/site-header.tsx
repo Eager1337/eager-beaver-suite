@@ -77,14 +77,14 @@ export function SiteHeader() {
               <>
                 <Link
                   to="/auth"
-                  className="hidden sm:inline-flex rounded-full px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                  className="hidden sm:inline-flex whitespace-nowrap rounded-full px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
                 >
                   Sign in
                 </Link>
                 <Link
                   to="/auth"
                   search={{ mode: "signup" }}
-                  className="inline-flex rounded-full bg-gradient-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-glow transition-transform hover:scale-[1.03]"
+                  className="inline-flex whitespace-nowrap rounded-full bg-gradient-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-glow transition-transform hover:scale-[1.03]"
                 >
                   Get started
                 </Link>
