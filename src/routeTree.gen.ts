@@ -31,6 +31,7 @@ import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as VCodeRouteImport } from './routes/v.$code'
 import { Route as AuthenticatedDownloadsIdRouteImport } from './routes/_authenticated/downloads.$id'
+import { Route as ApiPublicAdVideoRouteImport } from './routes/api/public/ad-video'
 import { Route as ApiPublicMediaRouteImport } from './routes/api/public/media'
 
 const IndexRoute = IndexRouteImport.update({
@@ -144,6 +145,11 @@ const AuthenticatedDownloadsIdRoute =
     path: '/$id',
     getParentRoute: () => AuthenticatedDownloadsRoute,
   } as any)
+const ApiPublicAdVideoRoute = ApiPublicAdVideoRouteImport.update({
+  id: '/api/public/ad-video',
+  path: '/api/public/ad-video',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicMediaRoute = ApiPublicMediaRouteImport.update({
   id: '/api/public/media',
   path: '/api/public/media',
@@ -172,6 +178,7 @@ export interface FileRoutesByFullPath {
   '/v/$code': typeof VCodeRoute
   '/blog/': typeof BlogIndexRoute
   '/downloads/$id': typeof AuthenticatedDownloadsIdRoute
+  '/api/public/ad-video': typeof ApiPublicAdVideoRoute
   '/api/public/media': typeof ApiPublicMediaRoute
 }
 export interface FileRoutesByTo {
@@ -195,6 +202,7 @@ export interface FileRoutesByTo {
   '/v/$code': typeof VCodeRoute
   '/blog': typeof BlogIndexRoute
   '/downloads/$id': typeof AuthenticatedDownloadsIdRoute
+  '/api/public/ad-video': typeof ApiPublicAdVideoRoute
   '/api/public/media': typeof ApiPublicMediaRoute
 }
 export interface FileRoutesById {
@@ -221,6 +229,7 @@ export interface FileRoutesById {
   '/v/$code': typeof VCodeRoute
   '/blog/': typeof BlogIndexRoute
   '/_authenticated/downloads/$id': typeof AuthenticatedDownloadsIdRoute
+  '/api/public/ad-video': typeof ApiPublicAdVideoRoute
   '/api/public/media': typeof ApiPublicMediaRoute
 }
 export interface FileRouteTypes {
@@ -247,6 +256,7 @@ export interface FileRouteTypes {
     | '/v/$code'
     | '/blog/'
     | '/downloads/$id'
+    | '/api/public/ad-video'
     | '/api/public/media'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -270,6 +280,7 @@ export interface FileRouteTypes {
     | '/v/$code'
     | '/blog'
     | '/downloads/$id'
+    | '/api/public/ad-video'
     | '/api/public/media'
   id:
     | '__root__'
@@ -295,6 +306,7 @@ export interface FileRouteTypes {
     | '/v/$code'
     | '/blog/'
     | '/_authenticated/downloads/$id'
+    | '/api/public/ad-video'
     | '/api/public/media'
   fileRoutesById: FileRoutesById
 }
@@ -312,6 +324,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SocialRoute: typeof SocialRoute
   VCodeRoute: typeof VCodeRoute
+  ApiPublicAdVideoRoute: typeof ApiPublicAdVideoRoute
   ApiPublicMediaRoute: typeof ApiPublicMediaRoute
 }
 
@@ -471,6 +484,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDownloadsIdRouteImport
       parentRoute: typeof AuthenticatedDownloadsRoute
     }
+    '/api/public/ad-video': {
+      id: '/api/public/ad-video'
+      path: '/api/public/ad-video'
+      fullPath: '/api/public/ad-video'
+      preLoaderRoute: typeof ApiPublicAdVideoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/media': {
       id: '/api/public/media'
       path: '/api/public/media'
@@ -542,6 +562,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   SocialRoute: SocialRoute,
   VCodeRoute: VCodeRoute,
+  ApiPublicAdVideoRoute: ApiPublicAdVideoRoute,
   ApiPublicMediaRoute: ApiPublicMediaRoute,
 }
 export const routeTree = rootRouteImport
