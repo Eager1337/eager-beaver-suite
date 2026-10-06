@@ -45,12 +45,12 @@ export function SiteHeader() {
             </span>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden lg:flex items-center gap-0.5">
             {links.map((l) => (
               <a
                 key={l.to}
                 href={l.to}
-                className="rounded-full px-4 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground hover:bg-accent/50"
+                className="whitespace-nowrap rounded-full px-2.5 py-1.5 text-[13px] text-muted-foreground transition-colors hover:text-foreground hover:bg-accent/50"
               >
                 {l.label}
               </a>
@@ -93,7 +93,7 @@ export function SiteHeader() {
 
             <button
               onClick={() => setOpen(!open)}
-              className="md:hidden grid h-9 w-9 place-items-center rounded-full border border-border"
+              className="lg:hidden grid h-9 w-9 place-items-center rounded-full border border-border"
               aria-label="Menu"
             >
               <Menu className="h-4 w-4" />
@@ -102,7 +102,7 @@ export function SiteHeader() {
         </div>
 
         {open && (
-          <div className="md:hidden border-t border-border/40 px-4 py-3 space-y-1">
+          <div className="lg:hidden border-t border-border/40 px-4 py-3 space-y-1">
             {links.map((l) => (
               <a
                 key={l.to}
