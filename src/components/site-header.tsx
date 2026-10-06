@@ -27,6 +27,7 @@ export function SiteHeader() {
     { to: "/#trending", label: "Trending" },
     { to: "/social", label: "YouTube & Instagram" },
     { to: "/browse", label: "Browse" },
+    { to: "/ai", label: "AI Studio" },
     { to: "/links", label: "Video Links" },
     { to: user ? "/account" : "/auth", label: "My account" },
   ];

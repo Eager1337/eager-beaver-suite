@@ -37,6 +37,10 @@ export function SiteFooter() {
             { label: "Pinterest downloader", to: "/downloader" },
             { label: "YouTube & Instagram", to: "/social" },
             { label: "Browse", to: "/browse" },
+            { label: "AI Studio", to: "/ai" },
+            { label: "Blog", to: "/blog" },
+            { label: "Pricing", to: "/pricing" },
+            { label: "Help & FAQ", to: "/help" },
             { label: "Video Links", to: "/links" },
           ]} />
           <FooterCol title="Explore" links={[
