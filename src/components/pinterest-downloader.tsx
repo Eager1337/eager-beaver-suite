@@ -251,7 +251,56 @@ function ResultCard({
               <Copy className="h-4 w-4" /> Copy link
             </button>
           </div>
+
+          <ShareRow sourceUrl={sourceUrl} title={result.title} />
         </div>
+      </div>
+    </div>
+  );
+}
+
+function ShareRow({ sourceUrl, title }: { sourceUrl: string; title: string | null }) {
+  const text = encodeURIComponent(`${title ?? "Check this out"} — via EagerBeaver`);
+  const link = encodeURIComponent(sourceUrl);
+  const targets: Array<{ name: string; href: string; Icon: typeof Share2 }> = [
+    { name: "WhatsApp", href: `https://wa.me/?text=${text}%20${link}`, Icon: MessageCircle },
+    { name: "X", href: `https://twitter.com/intent/tweet?text=${text}&url=${link}`, Icon: Twitter },
+    { name: "Facebook", href: `https://www.facebook.com/sharer/sharer.php?u=${link}`, Icon: Facebook },
+    { name: "Telegram", href: `https://t.me/share/url?url=${link}&text=${text}`, Icon: Send },
+  ];
+
+  async function nativeShare() {
+    try {
+      await navigator.share({ title: title ?? "EagerBeaver", url: sourceUrl });
+    } catch {
+      /* user cancelled or unsupported */
+    }
+  }
+
+  return (
+    <div>
+      <p className="text-xs font-medium text-muted-foreground mb-1.5">Share</p>
+      <div className="flex flex-wrap gap-1.5">
+        {targets.map(({ name, href, Icon }) => (
+          <a
+            key={name}
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs hover:bg-accent/60 transition-colors"
+          >
+            <Icon className="h-3.5 w-3.5" /> {name}
+          </a>
+        ))}
+        {"share" in navigator && (
+          <button
+            type="button"
+            onClick={nativeShare}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs hover:bg-accent/60 transition-colors"
+          >
+            <Share2 className="h-3.5 w-3.5" /> More…
+          </button>
+        )}
       </div>
     </div>
   );
