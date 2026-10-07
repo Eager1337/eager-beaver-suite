@@ -12,6 +12,11 @@ import {
   CheckCircle2,
   History,
   Youtube,
+  Share2,
+  MessageCircle,
+  Send,
+  Facebook,
+  Twitter,
 } from "lucide-react";
 import { SocialMode } from "@/components/social-downloader";
 import { toast } from "sonner";
