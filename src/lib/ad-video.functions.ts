@@ -72,16 +72,25 @@ async function createJob(apiKey: string, input: unknown, duration: string, aspec
   return j.id;
 }
 
-async function downloadMp4(apiKey: string, id: string): Promise<Buffer> {
+async function downloadMp4(apiKey: string, id: string): Promise<ArrayBuffer> {
   const res = await fetch(`${BASE}/v1/videos/${encodeURIComponent(id)}/content`, {
     headers: { Authorization: `Bearer ${apiKey}` },
   });
   if (!res.ok) throw new Error(`Couldn't fetch the finished video (${res.status}).`);
-  return Buffer.from(await res.arrayBuffer());
+  return res.arrayBuffer();
+}
+
+function toBase64(buf: ArrayBuffer): string {
+  const bytes = new Uint8Array(buf);
+  let out = "";
+  for (let i = 0; i < bytes.length; i += 8192) {
+    out += String.fromCharCode(...bytes.subarray(i, i + 8192));
+  }
+  return btoa(out);
 }
 
 /** Stores the finished MP4 in private storage and returns a signed URL. */
-async function storeVideo(userId: string, jobId: string, mp4: Buffer): Promise<string> {
+async function storeVideo(userId: string, jobId: string, mp4: ArrayBuffer): Promise<string> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const path = `${userId}/${jobId}.mp4`;
   const { error } = await supabaseAdmin.storage
@@ -176,7 +185,7 @@ export const checkAdVideo = createServerFn({ method: "POST" })
         const nextId = await createJob(
           apiKey,
           [
-            { type: "video", data: mp4.toString("base64"), mime_type: "video/mp4" },
+            { type: "video", data: toBase64(mp4), mime_type: "video/mp4" },
             {
               type: "text",
               text: "The scene continues seamlessly: the advert builds to its finale and ends on a clean, bold brand logo and tagline hero frame. The music swells and resolves. No dialogue. No voiceover.",
