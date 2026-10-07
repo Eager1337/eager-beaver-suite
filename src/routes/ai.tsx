@@ -3,16 +3,17 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
-import { Copy, Download, Loader2, MessageCircle, Image as ImageIcon, TrendingUp, Type, Send } from "lucide-react";
+import { Copy, Download, Loader2, MessageCircle, Image as ImageIcon, TrendingUp, Type, Send, Clapperboard, Upload, X } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { makeCaptions, makePicture, trendIdeas, chatHelper } from "@/lib/ai-tools.functions";
+import { startAdVideo, checkAdVideo } from "@/lib/ad-video.functions";
 
-type Tab = "captions" | "picture" | "trends" | "chat";
+type Tab = "captions" | "picture" | "trends" | "chat" | "advideo";
 
 export const Route = createFileRoute("/ai")({
   validateSearch: (s: Record<string, unknown>): { tab?: Tab } => ({
-    tab: ["captions", "picture", "trends", "chat"].includes(s.tab as string) ? (s.tab as Tab) : undefined,
+    tab: ["captions", "picture", "trends", "chat", "advideo"].includes(s.tab as string) ? (s.tab as Tab) : undefined,
   }),
   head: () => ({
     meta: [
@@ -32,6 +33,7 @@ const TABS: { key: Tab; label: string; icon: typeof Type }[] = [
   { key: "picture", label: "Picture maker", icon: ImageIcon },
   { key: "trends", label: "Trend ideas", icon: TrendingUp },
   { key: "chat", label: "Chat helper", icon: MessageCircle },
+  { key: "advideo", label: "Ad video", icon: Clapperboard },
 ];
 
 const copy = (t: string) => { navigator.clipboard.writeText(t); toast.success("Copied"); };
@@ -61,6 +63,7 @@ function AiPage() {
           {active === "picture" && <Picture />}
           {active === "trends" && <Trends />}
           {active === "chat" && <Chat />}
+          {active === "advideo" && <AdVideo />}
         </div>
       </main>
       <SiteFooter />
