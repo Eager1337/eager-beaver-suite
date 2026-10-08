@@ -3,16 +3,17 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
-import { Copy, Download, Loader2, MessageCircle, Image as ImageIcon, TrendingUp, Type, Send } from "lucide-react";
+import { Copy, Download, Loader2, MessageCircle, Image as ImageIcon, TrendingUp, Type, Send, Clapperboard, Upload, X } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { makeCaptions, makePicture, trendIdeas, chatHelper } from "@/lib/ai-tools.functions";
+import { startAdVideo, checkAdVideo } from "@/lib/ad-video.functions";
 
-type Tab = "captions" | "picture" | "trends" | "chat";
+type Tab = "captions" | "picture" | "trends" | "chat" | "advideo";
 
 export const Route = createFileRoute("/ai")({
   validateSearch: (s: Record<string, unknown>): { tab?: Tab } => ({
-    tab: ["captions", "picture", "trends", "chat"].includes(s.tab as string) ? (s.tab as Tab) : undefined,
+    tab: ["captions", "picture", "trends", "chat", "advideo"].includes(s.tab as string) ? (s.tab as Tab) : undefined,
   }),
   head: () => ({
     meta: [
@@ -32,6 +33,7 @@ const TABS: { key: Tab; label: string; icon: typeof Type }[] = [
   { key: "picture", label: "Picture maker", icon: ImageIcon },
   { key: "trends", label: "Trend ideas", icon: TrendingUp },
   { key: "chat", label: "Chat helper", icon: MessageCircle },
+  { key: "advideo", label: "Ad video", icon: Clapperboard },
 ];
 
 const copy = (t: string) => { navigator.clipboard.writeText(t); toast.success("Copied"); };
@@ -61,6 +63,7 @@ function AiPage() {
           {active === "picture" && <Picture />}
           {active === "trends" && <Trends />}
           {active === "chat" && <Chat />}
+          {active === "advideo" && <AdVideo />}
         </div>
       </main>
       <SiteFooter />
@@ -206,5 +209,143 @@ function Chat() {
         <button aria-label="Send" disabled={busy || !input.trim()} className={btn}><Send className="h-4 w-4" /></button>
       </form>
     </div>
+  );
+}
+
+function AdVideo() {
+  const start = useServerFn(startAdVideo);
+  const check = useServerFn(checkAdVideo);
+  const [brand, setBrand] = useState("");
+  const [product, setProduct] = useState("");
+  const [tagline, setTagline] = useState("");
+  const [style, setStyle] = useState<"luxury" | "bold" | "minimal" | "neon" | "afro-vibrant">("bold");
+  const [aspect, setAspect] = useState<"16:9" | "9:16">("9:16");
+  const [duration, setDuration] = useState<"10s" | "15s">("15s");
+  const [images, setImages] = useState<string[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [stage, setStage] = useState("");
+  const [progress, setProgress] = useState(0);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const pollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => { if (pollRef.current) clearTimeout(pollRef.current); }, []);
+
+  function addImages(files: FileList | null) {
+    if (!files) return;
+    const room = 3 - images.length;
+    const picks = Array.from(files).slice(0, room);
+    for (const f of picks) {
+      if (!/^image\/(png|jpeg|webp)$/.test(f.type)) { toast.error("Only PNG, JPG or WebP photos."); continue; }
+      if (f.size > 4 * 1024 * 1024) { toast.error(`"${f.name}" is over 4 MB.`); continue; }
+      const reader = new FileReader();
+      reader.onload = () => setImages((cur) => (cur.length < 3 ? [...cur, String(reader.result)] : cur));
+      reader.readAsDataURL(f);
+    }
+  }
+
+  async function poll(id: string, extend: boolean) {
+    try {
+      const r = await check({ data: { id, extend } });
+      if (r.status === "failed") { toast.error(r.error ?? "Video failed."); setBusy(false); return; }
+      if (r.nextId) {
+        setStage("Adding the final 5 seconds…");
+        setProgress(0);
+        pollRef.current = setTimeout(() => poll(r.nextId!, false), 6000);
+        return;
+      }
+      if (r.status === "completed" && r.videoUrl) {
+        setVideoUrl(r.videoUrl);
+        setProgress(100);
+        setBusy(false);
+        toast.success("Your advert is ready!");
+        return;
+      }
+      setProgress(r.progress);
+      pollRef.current = setTimeout(() => poll(id, extend), 6000);
+    } catch {
+      toast.error("Lost connection while checking your video. Try again.");
+      setBusy(false);
+    }
+  }
+
+  async function go(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true); setVideoUrl(null); setProgress(0);
+    setStage("Writing your advert script…");
+    try {
+      const r = await start({ data: { brand, product, tagline, style, aspect, duration, images } });
+      if (!r.ok) { toast.error(r.error); setBusy(false); return; }
+      setStage("Filming your advert (this takes 1–3 minutes)…");
+      pollRef.current = setTimeout(() => poll(r.id, r.extend), 6000);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "";
+      toast.error(/auth|sign|token|401/i.test(msg) ? "Please sign in first — adverts are saved to your account." : "Couldn't start the video. Check your details and try again.");
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form onSubmit={go} className="space-y-4">
+      <p className="text-sm text-muted-foreground">
+        Upload up to 3 product photos, describe your offer, and get a premium motion-graphics advert with music. Sign in required — your video is saved to your account.
+      </p>
+
+      <div>
+        <p className="mb-1.5 text-xs font-medium text-muted-foreground">Product photos (up to 3, optional)</p>
+        <div className="flex flex-wrap items-center gap-2">
+          {images.map((img, i) => (
+            <div key={i} className="relative h-20 w-20 overflow-hidden rounded-xl border border-border">
+              <img src={img} alt={`Product ${i + 1}`} className="h-full w-full object-cover" />
+              <button type="button" aria-label="Remove photo" onClick={() => setImages(images.filter((_, k) => k !== i))}
+                className="absolute right-1 top-1 rounded-full bg-background/80 p-0.5"><X className="h-3 w-3" /></button>
+            </div>
+          ))}
+          {images.length < 3 && (
+            <label className="grid h-20 w-20 cursor-pointer place-items-center rounded-xl border border-dashed border-border text-muted-foreground hover:border-primary hover:text-primary">
+              <Upload className="h-5 w-5" />
+              <input type="file" accept="image/png,image/jpeg,image/webp" multiple className="hidden" onChange={(e) => addImages(e.target.files)} />
+            </label>
+          )}
+        </div>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-2">
+        <input value={brand} onChange={(e) => setBrand(e.target.value)} placeholder="Brand name, e.g. Luspa Banks" className={field} />
+        <input value={tagline} onChange={(e) => setTagline(e.target.value)} placeholder="Tagline (optional)" className={field} />
+      </div>
+      <textarea value={product} onChange={(e) => setProduct(e.target.value)} rows={2} placeholder="What are you advertising? e.g. Handmade shea butter soap, Le 25, delivery in Freetown" className={field} />
+
+      <div className="flex flex-wrap gap-3">
+        <select value={style} onChange={(e) => setStyle(e.target.value as typeof style)} className={`${field} w-auto`}>
+          <option value="luxury">Luxury</option><option value="bold">Bold</option><option value="minimal">Minimal</option>
+          <option value="neon">Neon</option><option value="afro-vibrant">Afro-vibrant</option>
+        </select>
+        <select value={aspect} onChange={(e) => setAspect(e.target.value as typeof aspect)} className={`${field} w-auto`}>
+          <option value="9:16">Tall (TikTok / Reels)</option><option value="16:9">Wide (YouTube)</option>
+        </select>
+        <select value={duration} onChange={(e) => setDuration(e.target.value as typeof duration)} className={`${field} w-auto`}>
+          <option value="10s">10 seconds</option><option value="15s">15 seconds</option>
+        </select>
+        <button disabled={busy || brand.trim().length < 2 || product.trim().length < 3} className={btn}>
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Clapperboard className="h-4 w-4" />} Make my advert
+        </button>
+      </div>
+
+      {busy && (
+        <div className="space-y-2 animate-fade-up">
+          <div className="h-2 overflow-hidden rounded-full bg-muted">
+            <div className="h-full bg-gradient-primary transition-all" style={{ width: `${Math.max(progress, 5)}%` }} />
+          </div>
+          <p className="text-xs text-muted-foreground">{stage}</p>
+        </div>
+      )}
+
+      {videoUrl && (
+        <div className="max-w-sm space-y-3 animate-fade-up">
+          <video src={videoUrl} controls playsInline className="w-full rounded-2xl border border-border" />
+          <a href={videoUrl} download="eagerbeaver-advert.mp4" className={btn}><Download className="h-4 w-4" /> Download advert</a>
+        </div>
+      )}
+    </form>
   );
 }
