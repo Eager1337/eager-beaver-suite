@@ -3,11 +3,12 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
-import { Copy, Download, Loader2, MessageCircle, Image as ImageIcon, TrendingUp, Type, Send, Clapperboard, Upload, X } from "lucide-react";
+import { Copy, Download, Loader2, MessageCircle, Image as ImageIcon, TrendingUp, Type, Send, Clapperboard, Upload, X, Share2, Music } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { makeCaptions, makePicture, trendIdeas, chatHelper } from "@/lib/ai-tools.functions";
 import { startAdVideo, checkAdVideo } from "@/lib/ad-video.functions";
+import { fetchBlob, saveBlob, shareFile, extractAudioWav } from "@/lib/media-share";
 
 type Tab = "captions" | "picture" | "trends" | "chat" | "advideo";
 
@@ -340,12 +341,46 @@ function AdVideo() {
         </div>
       )}
 
-      {videoUrl && (
-        <div className="max-w-sm space-y-3 animate-fade-up">
-          <video src={videoUrl} controls playsInline className="w-full rounded-2xl border border-border" />
-          <a href={videoUrl} download="eagerbeaver-advert.mp4" className={btn}><Download className="h-4 w-4" /> Download advert</a>
-        </div>
-      )}
+      {videoUrl && <AdResult url={videoUrl} />}
     </form>
+  );
+}
+
+function AdResult({ url }: { url: string }) {
+  const [busy, setBusy] = useState<string | null>(null);
+  const blobRef = useRef<Blob | null>(null);
+  const getVideo = async () => (blobRef.current ??= await fetchBlob(url));
+  async function run(key: string, fn: () => Promise<void>) {
+    setBusy(key);
+    try { await fn(); } catch (e) { toast.error(e instanceof Error ? e.message : "Something went wrong."); }
+    setBusy(null);
+  }
+  const small = "inline-flex items-center justify-center gap-2 rounded-xl border border-border px-4 py-2.5 text-sm font-medium hover:border-primary disabled:opacity-50";
+  const spin = (k: string) => busy === k && <Loader2 className="h-4 w-4 animate-spin" />;
+  return (
+    <div className="max-w-sm space-y-3 animate-fade-up">
+      <video src={url} controls autoPlay loop playsInline className="w-full rounded-2xl border border-border" />
+      <div className="grid grid-cols-2 gap-2">
+        <button type="button" disabled={!!busy} className={btn} onClick={() => run("dv", async () => saveBlob(await getVideo(), "eagerbeaver-advert.mp4"))}>
+          {spin("dv") || <Download className="h-4 w-4" />} Video
+        </button>
+        <button type="button" disabled={!!busy} className={small} onClick={() => run("sv", async () => {
+          const r = await shareFile(await getVideo(), "eagerbeaver-advert.mp4", "My EagerBeaver advert");
+          if (r === "saved") toast.info("Sharing files isn't supported here, so the video was saved instead.");
+        })}>
+          {spin("sv") || <Share2 className="h-4 w-4" />} Share video
+        </button>
+        <button type="button" disabled={!!busy} className={small} onClick={() => run("da", async () => saveBlob(await extractAudioWav(await getVideo()), "eagerbeaver-advert-sound.wav"))}>
+          {spin("da") || <Music className="h-4 w-4" />} Audio
+        </button>
+        <button type="button" disabled={!!busy} className={small} onClick={() => run("sa", async () => {
+          const r = await shareFile(await extractAudioWav(await getVideo()), "eagerbeaver-advert-sound.wav", "Advert sound");
+          if (r === "saved") toast.info("Sharing files isn't supported here, so the sound was saved instead.");
+        })}>
+          {spin("sa") || <Share2 className="h-4 w-4" />} Share audio
+        </button>
+      </div>
+      <p className="text-xs text-muted-foreground">Share sends the real file — on your phone pick WhatsApp, TikTok, Instagram and more.</p>
+    </div>
   );
 }
