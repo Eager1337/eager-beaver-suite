@@ -8,6 +8,8 @@ import {
   TrendingUp, ChevronRight, Check, Star,
 } from "lucide-react";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import freetown from "@/assets/sl-freetown.jpg";
 import beach from "@/assets/sl-beach.jpg";
 import market from "@/assets/sl-market.jpg";
@@ -97,39 +99,107 @@ function Hero() {
   );
 }
 
+type PublicFeedItem = {
+  id: string;
+  title: string | null;
+  author_name: string | null;
+  media_type: string;
+  media_url: string | null;
+  preview_url: string | null;
+  thumbnail_url: string | null;
+  created_at: string;
+};
+
 function TrendingSection() {
+  const { data: savedItems = [], isLoading } = useQuery({
+    queryKey: ["home-public-saved-downloads"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("browse_feed", {
+        _limit: 12,
+        _offset: 0,
+        _type: undefined,
+      });
+      if (error) throw error;
+      return (data ?? []) as PublicFeedItem[];
+    },
+    staleTime: 30_000,
+  });
+
+  const items = savedItems.filter((item) => item.media_url && item.media_url.startsWith("https://"));
+
   return (
     <section id="trending" className="mx-auto max-w-7xl px-4 md:px-6 py-16 md:py-20 scroll-mt-20">
       <div className="flex items-end justify-between mb-8">
         <div>
           <div className="inline-flex items-center gap-2 rounded-full bg-accent/60 px-3 py-1 text-xs font-medium">
-            <TrendingUp className="h-3 w-3" /> Trending now
+            <TrendingUp className="h-3 w-3" /> Community saves
           </div>
           <h2 className="mt-3 font-display text-3xl md:text-4xl font-semibold">
-            What creators are saving today
+            Recently saved on EagerBeaver
           </h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Publicly shared pictures and videos saved by the community.
+          </p>
         </div>
-        <Link to="/downloader" className="hidden md:inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-          Explore more <ChevronRight className="h-4 w-4" />
+        <Link to="/browse" className="hidden md:inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+          Browse all <ChevronRight className="h-4 w-4" />
         </Link>
       </div>
 
-      <div className="columns-2 md:columns-3 lg:columns-4 gap-4 [column-fill:_balance]">
-        {slMedia.map((m, i) => (
-          <div key={m.title} className="mb-4 break-inside-avoid group animate-fade-up" style={{ animationDelay: `${i * 40}ms` }}>
-            <div className="relative overflow-hidden rounded-2xl shadow-elegant transition-transform group-hover:-translate-y-1">
-              {m.video ? (
-                <LoopingAdvert src={m.video} poster={m.src} title={m.title} />
-              ) : (
-                <img src={m.src} alt={m.title} loading="lazy" className="w-full object-cover animate-kenburns" />
-              )}
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/90 to-transparent p-3">
-                <div className="text-xs font-semibold text-foreground">{m.title}</div>
-                <div className="text-[10px] text-muted-foreground">{m.creator}</div>
-              </div>
-            </div>
-          </div>
-        ))}
+      {isLoading && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="aspect-[4/5] animate-pulse rounded-2xl bg-muted" />
+          ))}
+        </div>
+      )}
+
+      {!isLoading && items.length > 0 ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {items.slice(0, 12).map((item, i) => {
+            const preview = item.thumbnail_url ?? item.preview_url ?? item.media_url!;
+            const video = item.media_type === "video" || /\\.(mp4|webm|mov)(\\?|$)/i.test(item.media_url ?? "");
+            return (
+              <Link
+                key={item.id}
+                to="/browse"
+                className="group relative block overflow-hidden rounded-2xl bg-muted shadow-elegant animate-fade-up"
+                style={{ animationDelay: `${i * 35}ms` }}
+                aria-label={`View ${item.title ?? "saved media"} in Browse`}
+              >
+                <img
+                  src={preview}
+                  alt={item.title ?? "Community saved media"}
+                  loading="lazy"
+                  className="aspect-[4/5] w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+                {video && (
+                  <div className="absolute left-3 top-3 rounded-full bg-black/65 px-2.5 py-1 text-[10px] font-semibold text-white">
+                    VIDEO
+                  </div>
+                )}
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent p-3 pt-10">
+                  <div className="line-clamp-2 text-sm font-semibold text-white">{item.title ?? "Saved media"}</div>
+                  {item.author_name && <div className="mt-1 truncate text-xs text-white/75">{item.author_name}</div>}
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      ) : !isLoading ? (
+        <div className="rounded-2xl border border-border bg-card/40 px-6 py-10 text-center">
+          <p className="font-medium">The community feed is ready for its first public save.</p>
+          <p className="mt-2 text-sm text-muted-foreground">Save media while signed in to add it to the public community feed.</p>
+          <Link to="/browse" className="mt-4 inline-flex rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground">
+            Explore community media
+          </Link>
+        </div>
+      ) : null}
+
+      <div className="mt-6 md:hidden">
+        <Link to="/browse" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+          Browse all community saves <ChevronRight className="h-4 w-4" />
+        </Link>
       </div>
     </section>
   );
