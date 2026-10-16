@@ -244,6 +244,7 @@ function Thumbnails() {
     canvas.height = preset.height;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+    let backgroundImage: HTMLImageElement | null = null;
     const draw = () => {
       const w = canvas.width;
       const h = canvas.height;
@@ -304,7 +305,6 @@ function Thumbnails() {
       ctx.fillStyle = accent;
       ctx.fillText("EAGERBEAVER", w - pad, h - pad * 0.55);
     };
-    let backgroundImage: HTMLImageElement | null = null;
     if (background) {
       backgroundImage = new Image();
       backgroundImage.onload = draw;
