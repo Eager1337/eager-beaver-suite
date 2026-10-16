@@ -229,12 +229,19 @@ function Thumbnails() {
   const make = useServerFn(makePicture);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [platform, setPlatform] = useState<ThumbnailPlatform>("youtube");
-  const [headline, setHeadline] = useState("MAKE YOUR NEXT VIDEO POP");
-  const [subtitle, setSubtitle] = useState("The one thing you need to know");
+  const [headline, setHeadline] = useState("");
+  const [subtitle, setSubtitle] = useState("");
   const [accent, setAccent] = useState("#facc15");
   const [background, setBackground] = useState<string | null>(null);
+  const [subject, setSubject] = useState<string | null>(null);
   const [prompt, setPrompt] = useState("");
   const [busy, setBusy] = useState(false);
+  const [sourceName, setSourceName] = useState("");
+  const [sourceKind, setSourceKind] = useState<"image" | "video" | "">("");
+  const [removeBusy, setRemoveBusy] = useState(false);
+  const [hookBusy, setHookBusy] = useState(false);
+  const [cinematic, setCinematic] = useState(true);
+  const [style, setStyle] = useState<"cinematic" | "luxury" | "gaming" | "creator" | "product">("cinematic");
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -244,178 +251,237 @@ function Thumbnails() {
     canvas.height = preset.height;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    let backgroundImage: HTMLImageElement | null = null;
+    let bg: HTMLImageElement | null = null;
+    let fg: HTMLImageElement | null = null;
     const draw = () => {
-      const w = canvas.width;
-      const h = canvas.height;
-      if (background) {
-        ctx.drawImage(backgroundImage!, 0, 0, w, h);
+      const w = canvas.width, h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      if (background && bg) {
+        const scale = Math.max(w / bg.width, h / bg.height);
+        const sw = bg.width * scale, sh = bg.height * scale;
+        ctx.drawImage(bg, (w - sw) / 2, (h - sh) / 2, sw, sh);
       } else {
-        const gradient = ctx.createLinearGradient(0, 0, w, h);
-        gradient.addColorStop(0, "#111827");
-        gradient.addColorStop(0.55, "#312e81");
-        gradient.addColorStop(1, "#0f172a");
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, w, h);
-        ctx.globalAlpha = 0.18;
-        ctx.fillStyle = accent;
-        ctx.beginPath();
-        ctx.arc(w * 0.82, h * 0.25, Math.min(w, h) * 0.28, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.globalAlpha = 1;
+        const g = ctx.createLinearGradient(0, 0, w, h);
+        g.addColorStop(0, "#09090b"); g.addColorStop(.48, "#312e81"); g.addColorStop(1, "#020617");
+        ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+        ctx.globalAlpha = .28; ctx.fillStyle = accent;
+        ctx.beginPath(); ctx.ellipse(w * .78, h * .28, w * .25, h * .3, -.5, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1;
       }
-      const shade = ctx.createLinearGradient(0, h * 0.2, 0, h);
-      shade.addColorStop(0, "rgba(0,0,0,0.08)");
-      shade.addColorStop(1, "rgba(0,0,0,0.82)");
-      ctx.fillStyle = shade;
-      ctx.fillRect(0, 0, w, h);
-      const pad = w * 0.07;
-      const fontSize = Math.max(30, Math.min(w, h) * (platform === "tiktok" || platform === "pinterest" ? 0.075 : 0.095));
-      ctx.textAlign = "left";
-      ctx.textBaseline = "bottom";
-      ctx.lineJoin = "round";
-      ctx.font = "900 " + fontSize + "px system-ui, sans-serif";
-      const words = headline.trim().toUpperCase().split(/\s+/);
-      const maxWidth = w - pad * 2;
-      const lines: string[] = [];
-      let line = "";
+      if (cinematic) {
+        const vignette = ctx.createRadialGradient(w * .5, h * .42, Math.min(w,h)*.12, w*.5, h*.45, Math.max(w,h)*.72);
+        vignette.addColorStop(0, "rgba(0,0,0,0)"); vignette.addColorStop(1, "rgba(0,0,0,.78)");
+        ctx.fillStyle = vignette; ctx.fillRect(0,0,w,h);
+        const shade = ctx.createLinearGradient(0,h*.25,0,h);
+        shade.addColorStop(0,"rgba(0,0,0,0)"); shade.addColorStop(.5,"rgba(0,0,0,.18)"); shade.addColorStop(1,"rgba(0,0,0,.92)");
+        ctx.fillStyle = shade; ctx.fillRect(0,0,w,h);
+        ctx.fillStyle = accent; ctx.globalAlpha = .9; ctx.fillRect(0,0,w,Math.max(5,h*.009)); ctx.globalAlpha=1;
+      } else {
+        const shade = ctx.createLinearGradient(0,h*.25,0,h);
+        shade.addColorStop(0,"rgba(0,0,0,0)"); shade.addColorStop(1,"rgba(0,0,0,.72)");
+        ctx.fillStyle=shade; ctx.fillRect(0,0,w,h);
+      }
+      const pad = w * .065;
+      if (fg) {
+        const maxW = w * (platform === "tiktok" ? .62 : .55);
+        const maxH = h * .66;
+        const scale = Math.min(maxW / fg.width, maxH / fg.height);
+        const fw = fg.width * scale, fh = fg.height * scale;
+        const fx = w - pad - fw, fy = h * .12 + (maxH - fh) / 2;
+        ctx.save(); ctx.shadowColor = accent; ctx.shadowBlur = Math.min(w,h)*.035;
+        ctx.drawImage(fg, fx, fy, fw, fh); ctx.restore();
+      }
+      const vertical = platform === "tiktok" || platform === "pinterest";
+      const fontSize = Math.max(28, Math.min(w,h) * (vertical ? .07 : .09));
+      const maxWidth = w * (fg ? .56 : .87) - pad;
+      ctx.textAlign="left"; ctx.textBaseline="alphabetic"; ctx.lineJoin="round";
+      ctx.font = "1000 " + fontSize + "px system-ui, sans-serif";
+      const words = (headline.trim() || "YOUR NEXT BIG THING").toUpperCase().split(/\s+/);
+      const lines: string[] = []; let line = "";
       for (const word of words) {
-        const test = line ? line + " " + word : word;
+        let test = line ? line + " " + word : word;
         if (ctx.measureText(test).width > maxWidth && line) { lines.push(line); line = word; }
         else line = test;
       }
       if (line) lines.push(line);
-      const lineHeight = fontSize * 1.05;
-      const safeLines = lines.slice(0, platform === "tiktok" || platform === "pinterest" ? 5 : 3);
-      const headlineHeight = safeLines.length * lineHeight;
-      let y = h * 0.78;
-      if (platform === "tiktok" || platform === "pinterest") y = h * 0.72;
-      ctx.fillStyle = accent;
-      ctx.fillRect(pad, y - headlineHeight - fontSize * 0.2, Math.max(8, w * 0.012), headlineHeight + fontSize * 0.35);
-      ctx.fillStyle = "#ffffff";
-      safeLines.forEach((text, i) => ctx.fillText(text, pad + w * 0.035, y - (safeLines.length - 1 - i) * lineHeight));
+      const maxLines = vertical ? 5 : 3;
+      const safeLines = lines.slice(0,maxLines);
+      const lh = fontSize*1.02;
+      const blockHeight = safeLines.length*lh;
+      const yStart = vertical ? h*.69 : h*.78;
+      ctx.fillStyle=accent; ctx.fillRect(pad,yStart-blockHeight-fontSize*.24,Math.max(7,w*.012),blockHeight+fontSize*.42);
+      ctx.font = "1000 " + fontSize + "px system-ui, sans-serif";
+      safeLines.forEach((t,i) => {
+        const y = yStart - (safeLines.length-1-i)*lh;
+        ctx.lineWidth = Math.max(3,fontSize*.085); ctx.strokeStyle="rgba(0,0,0,.65)"; ctx.strokeText(t,pad+w*.025,y);
+        ctx.fillStyle="#fff"; ctx.shadowColor="rgba(0,0,0,.5)"; ctx.shadowBlur=12; ctx.fillText(t,pad+w*.025,y); ctx.shadowBlur=0;
+      });
       if (subtitle.trim()) {
-        ctx.font = "600 " + Math.max(18, fontSize * 0.34) + "px system-ui, sans-serif";
-        ctx.fillStyle = "#f3f4f6";
-        ctx.fillText(subtitle.trim().slice(0, 100), pad + w * 0.035, Math.min(h - pad, y + fontSize * 0.7), maxWidth);
+        ctx.font = "700 " + Math.max(17,fontSize*.31) + "px system-ui, sans-serif";
+        ctx.fillStyle="#f8fafc"; ctx.fillText(subtitle.trim().slice(0,90),pad+w*.025,Math.min(h-pad,yStart+fontSize*.65),maxWidth);
       }
-      ctx.textBaseline = "alphabetic";
-      ctx.textAlign = "right";
-      ctx.font = "700 " + Math.max(14, w * 0.018) + "px system-ui, sans-serif";
-      ctx.fillStyle = accent;
-      ctx.fillText("EAGERBEAVER", w - pad, h - pad * 0.55);
+      ctx.textAlign="right"; ctx.font="800 "+Math.max(13,w*.015)+"px system-ui,sans-serif"; ctx.fillStyle=accent;
+      ctx.fillText("EAGERBEAVER",w-pad,h-pad*.48);
     };
-    if (background) {
-      backgroundImage = new Image();
-      backgroundImage.onload = draw;
-      backgroundImage.onerror = () => toast.error("That image could not be opened.");
-      backgroundImage.src = background;
-    } else draw();
-  }, [platform, headline, subtitle, accent, background]);
+    const load = (src: string, done: (img: HTMLImageElement) => void) => {
+      const image = new Image(); image.onload=()=>done(image); image.onerror=()=>toast.error("Could not load media for preview."); image.src=src;
+    };
+    if (background) load(background, (img)=>{bg=img; if(subject) load(subject,(sub)=>{fg=sub;draw();}); else draw();});
+    else if (subject) load(subject,(img)=>{fg=img;draw();});
+    else draw();
+  }, [platform, headline, subtitle, accent, background, subject, cinematic]);
 
-  function upload(file: File | undefined) {
+  async function upload(file: File | undefined) {
     if (!file) return;
-    if (!file.type.startsWith("image/")) { toast.error("Choose an image file."); return; }
-    if (file.size > 8 * 1024 * 1024) { toast.error("Choose an image under 8 MB."); return; }
-    const reader = new FileReader();
-    reader.onload = () => setBackground(String(reader.result));
-    reader.onerror = () => toast.error("Could not read that image.");
-    reader.readAsDataURL(file);
+    if (file.size > 100 * 1024 * 1024) { toast.error("Choose media under 100 MB."); return; }
+    if (file.type.startsWith("image/")) {
+      if (file.size > 15 * 1024 * 1024) { toast.error("Choose an image under 15 MB for reliable editing."); return; }
+      const reader = new FileReader();
+      reader.onload = () => {
+        const data = String(reader.result);
+        setBackground(data); setSubject(null); setSourceName(file.name); setSourceKind("image");
+        setHeadline((v)=>v || suggestHook(file.name));
+        setSubtitle((v)=>v || "WATCH UNTIL THE END");
+        toast.success("Photo loaded. Your cinematic thumbnail is ready to customise.");
+      };
+      reader.onerror=()=>toast.error("Could not read that image.");
+      reader.readAsDataURL(file);
+      return;
+    }
+    if (file.type.startsWith("video/")) {
+      const url = URL.createObjectURL(file);
+      const video = document.createElement("video");
+      video.preload="metadata"; video.muted=true; video.playsInline=true; video.src=url;
+      video.onloadedmetadata=()=>{
+        video.currentTime=Math.min(1.5,Math.max(0,video.duration*.12));
+      };
+      video.onseeked=()=>{
+        try {
+          const c=document.createElement("canvas"); c.width=video.videoWidth; c.height=video.videoHeight;
+          const cctx=c.getContext("2d");
+          if (!cctx) throw new Error("Could not extract a frame.");
+          cctx.drawImage(video,0,0,c.width,c.height);
+          const data=c.toDataURL("image/jpeg",.92);
+          setBackground(data); setSubject(null); setSourceName(file.name); setSourceKind("video");
+          setHeadline((v)=>v || suggestHook(file.name)); setSubtitle((v)=>v || "THE MOMENT YOU NEED TO SEE");
+          toast.success("Video frame captured. Your thumbnail is ready.");
+        } catch { toast.error("Couldn't extract a frame from that video."); }
+        finally { URL.revokeObjectURL(url); video.removeAttribute("src"); video.load(); }
+      };
+      video.onerror=()=>{toast.error("This video format could not be opened in your browser.");URL.revokeObjectURL(url);};
+      return;
+    }
+    toast.error("Upload a photo or video file.");
   }
 
-  async function generateArtwork() {
-    const description = prompt.trim() || headline.trim();
-    if (description.length < 3) { toast.error("Describe the artwork you want first."); return; }
-    setBusy(true);
+  function suggestHook(name: string) {
+    const base = name.replace(/\.[^.]+$/,"").replace(/[_-]+/g," ").replace(/\s+/g," ").trim();
+    return base ? base.toUpperCase().slice(0,58) : "YOU NEED TO SEE THIS";
+  }
+
+  async function makeHook() {
+    setHookBusy(true);
     try {
-      const result = await make({ data: { prompt: "Create a high-quality, eye-catching background image for a " + THUMBNAIL_PRESETS[platform].hint + ". Topic: " + description + ". Style: bold professional creator artwork, strong contrast, cinematic lighting, clean composition, leave clear negative space for headline text, no text, no letters, no logos." } });
-      if (result.ok) { setBackground(result.image); toast.success("Artwork ready. Edit the text and export your design."); }
+      const result = await make({data:{prompt:"Create a dramatic, clickable YouTube/social thumbnail background inspired by this content title: "+(sourceName || prompt || headline || "creator video")+". Style: "+style+", cinematic movie-poster lighting, crisp focal subject, strong rim light, vivid but tasteful color contrast, professional photo-real composition, dramatic depth, visual curiosity and urgency. Keep a clean lower-left area for large title overlay. Absolutely no text, letters, watermark or logo."}});
+      if (result.ok) { setBackground(result.image); setSubject(null); setSourceKind("image"); toast.success("Cinematic artwork generated. Add your hook text and export."); }
       else toast.error(result.error);
-    } catch {
-      toast.error("Artwork generation failed. Try again or upload your own image.");
-    } finally {
-      setBusy(false);
+    } catch { toast.error("Artwork generation failed. Check AI credits/provider settings and try again."); }
+    finally { setBusy(false); }
+  }
+
+  async function removeBackground() {
+    if (!background || !sourceKind || sourceKind === "video") {
+      toast.error("Upload a photo first. Background removal works on photos, not video frames."); return;
     }
+    setRemoveBusy(true);
+    try {
+      const { removeBackground: removeBg } = await import("@imgly/background-removal");
+      const blob = await removeBg(background, { output: { format: "image/png", quality: .95 } });
+      const reader = new FileReader();
+      reader.onload = () => { setSubject(String(reader.result)); setBackground(null); toast.success("Background removed. Subject cutout added to the cinematic layout."); };
+      reader.onerror = () => toast.error("Could not prepare the transparent cutout.");
+      reader.readAsDataURL(blob);
+    } catch (err) {
+      toast.error(err instanceof Error ? "Background removal failed to load. Check your connection and try again." : "Background removal failed.");
+    } finally { setRemoveBusy(false); }
   }
 
   function download() {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    canvas.toBlob((blob) => {
-      if (!blob) { toast.error("Could not export this design."); return; }
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "eagerbeaver-" + platform + "-thumbnail.png";
-      link.click();
-      URL.revokeObjectURL(url);
-      toast.success("PNG exported.");
-    }, "image/png");
+    const canvas=canvasRef.current; if(!canvas) return;
+    canvas.toBlob((blob)=>{
+      if(!blob){toast.error("Could not export this design.");return;}
+      const url=URL.createObjectURL(blob); const link=document.createElement("a");
+      link.href=url; link.download="eagerbeaver-"+platform+"-cinematic-thumbnail.png"; link.click();
+      setTimeout(()=>URL.revokeObjectURL(url),1000); toast.success("Cinematic thumbnail downloaded.");
+    },"image/png");
   }
 
   function saveProject() {
-    const project = { platform, headline, subtitle, accent, background, updatedAt: new Date().toISOString() };
     try {
-      localStorage.setItem("eagerbeaver-thumbnail-project", JSON.stringify(project));
+      localStorage.setItem("eagerbeaver-thumbnail-project",JSON.stringify({platform,headline,subtitle,accent,background,subject,sourceName,sourceKind,style,cinematic,updatedAt:new Date().toISOString()}));
       toast.success("Design saved on this device.");
-    } catch { toast.error("This design is too large to save in browser storage. Export the PNG instead."); }
+    } catch { toast.error("This design is too large to save in browser storage. Download the PNG instead."); }
   }
 
   function loadProject() {
     try {
-      const raw = localStorage.getItem("eagerbeaver-thumbnail-project");
-      if (!raw) { toast.message("No saved thumbnail project on this device yet."); return; }
-      const saved = JSON.parse(raw);
-      if (saved.platform in THUMBNAIL_PRESETS) setPlatform(saved.platform);
-      setHeadline(typeof saved.headline === "string" ? saved.headline : "");
-      setSubtitle(typeof saved.subtitle === "string" ? saved.subtitle : "");
-      setAccent(typeof saved.accent === "string" ? saved.accent : "#facc15");
-      setBackground(typeof saved.background === "string" ? saved.background : null);
+      const raw=localStorage.getItem("eagerbeaver-thumbnail-project");
+      if(!raw){toast.message("No saved thumbnail project on this device yet.");return;}
+      const s=JSON.parse(raw);
+      if(s.platform in THUMBNAIL_PRESETS) setPlatform(s.platform);
+      setHeadline(typeof s.headline==="string"?s.headline:""); setSubtitle(typeof s.subtitle==="string"?s.subtitle:"");
+      setAccent(typeof s.accent==="string"?s.accent:"#facc15"); setBackground(typeof s.background==="string"?s.background:null);
+      setSubject(typeof s.subject==="string"?s.subject:null); setSourceName(typeof s.sourceName==="string"?s.sourceName:"");
+      setSourceKind(s.sourceKind==="image"||s.sourceKind==="video"?s.sourceKind:""); setStyle(s.style||"cinematic"); setCinematic(s.cinematic!==false);
       toast.success("Saved design loaded.");
-    } catch { toast.error("Could not load the saved design."); }
+    } catch { toast.error("Could not load saved design."); }
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(280px,0.9fr)]">
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,.9fr)]">
       <div className="space-y-4">
         <div>
-          <h2 className="text-xl font-semibold">Social Thumbnail Studio</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Design platform-sized graphics for videos, posts and pins. Upload a photo or generate artwork, then add your own text.</p>
+          <h2 className="text-xl font-semibold">AI Cinematic Thumbnail Maker</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Upload one photo or video and instantly turn it into a bold, cinematic, attention-grabbing cover. Extracts a frame from video, adds dramatic lighting and hook text, and can cut out a photo background.</p>
         </div>
-        <label className="block space-y-2 text-sm font-medium">Platform format
-          <select value={platform} onChange={(e) => setPlatform(e.target.value as ThumbnailPlatform)} className={field}>
-            {Object.entries(THUMBNAIL_PRESETS).map(([key, value]) => <option key={key} value={key}>{value.label} — {value.width} × {value.height}</option>)}
-          </select>
+        <label className="block space-y-2 text-sm font-medium">1. Upload your photo or video (up to 100 MB)
+          <input type="file" accept="image/*,video/*" onChange={(e)=>upload(e.target.files?.[0])} className={field} />
         </label>
-        <label className="block space-y-2 text-sm font-medium">Headline
-          <textarea value={headline} onChange={(e) => setHeadline(e.target.value)} maxLength={120} rows={2} className={field} placeholder="Your big headline" />
+        {sourceName && <div className="flex items-center justify-between gap-2 rounded-xl border border-border p-3 text-sm"><span className="truncate">{sourceKind==="video"?"Video frame":"Photo"}: {sourceName}</span><button type="button" onClick={()=>{setBackground(null);setSubject(null);setSourceName("");setSourceKind("");}} className="rounded-lg p-1 hover:bg-muted" aria-label="Remove uploaded media"><X className="h-4 w-4"/></button></div>}
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="block space-y-2 text-sm font-medium">Platform
+            <select value={platform} onChange={(e)=>setPlatform(e.target.value as ThumbnailPlatform)} className={field}>
+              {Object.entries(THUMBNAIL_PRESETS).map(([key,v])=><option key={key} value={key}>{v.label} — {v.width} × {v.height}</option>)}
+            </select>
+          </label>
+          <label className="block space-y-2 text-sm font-medium">Visual style
+            <select value={style} onChange={(e)=>setStyle(e.target.value as typeof style)} className={field}>
+              <option value="cinematic">Cinematic movie poster</option><option value="luxury">Luxury / premium</option><option value="gaming">Gaming / neon</option><option value="creator">Creator / viral</option><option value="product">Product spotlight</option>
+            </select>
+          </label>
+        </div>
+        <label className="block space-y-2 text-sm font-medium">Attention-grabbing hook
+          <textarea value={headline} onChange={(e)=>setHeadline(e.target.value)} maxLength={100} rows={2} className={field} placeholder="e.g. NOBODY EXPECTED THIS…" />
         </label>
-        <label className="block space-y-2 text-sm font-medium">Subtitle (optional)
-          <input value={subtitle} onChange={(e) => setSubtitle(e.target.value)} maxLength={140} className={field} placeholder="Short supporting line" />
+        <label className="block space-y-2 text-sm font-medium">Supporting line (optional)
+          <input value={subtitle} onChange={(e)=>setSubtitle(e.target.value)} maxLength={100} className={field} placeholder="e.g. Watch what happened next" />
         </label>
-        <label className="block space-y-2 text-sm font-medium">Accent colour
-          <input type="color" value={accent} onChange={(e) => setAccent(e.target.value)} className="h-11 w-20 cursor-pointer rounded-lg border border-border bg-card p-1" />
-        </label>
-        <label className="block space-y-2 text-sm font-medium">Upload your image (PNG, JPG, WebP; max 8 MB)
-          <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => upload(e.target.files?.[0])} className={field} />
-        </label>
-        <label className="block space-y-2 text-sm font-medium">AI artwork prompt (optional)
-          <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} rows={2} className={field} placeholder="e.g. futuristic gaming desk, purple cinematic light" />
-        </label>
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={cinematic} onChange={(e)=>setCinematic(e.target.checked)} /> Cinematic lighting & vignette</label>
+          <label className="flex items-center gap-2 text-sm">Accent <input type="color" value={accent} onChange={(e)=>setAccent(e.target.value)} className="h-9 w-12 cursor-pointer rounded border border-border bg-card p-1"/></label>
+        </div>
         <div className="flex flex-wrap gap-2">
-          <button type="button" onClick={generateArtwork} disabled={busy} className={btn}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}{busy ? "Generating artwork…" : "Generate AI artwork"}</button>
-          <button type="button" onClick={download} className={btn}><Download className="h-4 w-4" /> Export PNG</button>
-          <button type="button" onClick={saveProject} className="rounded-xl border border-border px-4 py-3 text-sm font-semibold">Save design</button>
-          <button type="button" onClick={loadProject} className="rounded-xl border border-border px-4 py-3 text-sm font-semibold">Load saved</button>
-          {background && <button type="button" onClick={() => setBackground(null)} className="rounded-xl border border-border px-4 py-3 text-sm font-semibold">Remove image</button>}
+          <button type="button" onClick={makeHook} disabled={busy} className={btn}>{busy?<Loader2 className="h-4 w-4 animate-spin"/>:<ImageIcon className="h-4 w-4"/>}{busy?"Creating cinematic artwork…":"Generate cinematic artwork"}</button>
+          <button type="button" onClick={removeBackground} disabled={removeBusy||!background||sourceKind!=="image"} className="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-3 text-sm font-semibold disabled:opacity-50">{removeBusy?<Loader2 className="h-4 w-4 animate-spin"/>:<ImageIcon className="h-4 w-4"/>}{removeBusy?"Removing background…":"Remove photo background"}</button>
+          <button type="button" onClick={download} className={btn}><Download className="h-4 w-4"/> Download thumbnail</button>
+          <button type="button" onClick={saveProject} className="rounded-xl border border-border px-4 py-3 text-sm font-semibold">Save</button>
+          <button type="button" onClick={loadProject} className="rounded-xl border border-border px-4 py-3 text-sm font-semibold">Load</button>
         </div>
+        <p className="text-xs text-muted-foreground">Photo background removal runs in your browser and may download a model the first time. Video uploads use a frame from the clip; this creates a thumbnail, not a full edited video. AI artwork generation requires configured AI credits.</p>
       </div>
       <div className="space-y-3">
-        <div className="flex items-center justify-between gap-2"><h3 className="font-semibold">Live preview</h3><span className="text-xs text-muted-foreground">{THUMBNAIL_PRESETS[platform].width} × {THUMBNAIL_PRESETS[platform].height}</span></div>
-        <div className="overflow-hidden rounded-2xl border border-border bg-muted p-2">
-          <canvas ref={canvasRef} className="h-auto w-full rounded-xl" aria-label="Live thumbnail preview" />
-        </div>
-        <p className="text-xs text-muted-foreground">Your design is composed in the browser. AI artwork requires the site's image provider to be configured. Exported graphics are PNG files at the selected platform dimensions.</p>
+        <div className="flex items-center justify-between gap-2"><h3 className="font-semibold">Live thumbnail preview</h3><span className="text-xs text-muted-foreground">{THUMBNAIL_PRESETS[platform].width} × {THUMBNAIL_PRESETS[platform].height}</span></div>
+        <div className="overflow-hidden rounded-2xl border border-border bg-muted p-2"><canvas ref={canvasRef} className="h-auto w-full rounded-xl" aria-label="Cinematic thumbnail preview"/></div>
+        <div className="rounded-xl border border-border p-3 text-sm text-muted-foreground">Tip: a short emotional hook, one clear subject, strong contrast and a little mystery usually work better than a long sentence.</div>
       </div>
     </div>
   );
