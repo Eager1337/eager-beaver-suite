@@ -275,7 +275,7 @@ function Thumbnails() {
       ctx.textBaseline = "bottom";
       ctx.lineJoin = "round";
       ctx.font = "900 " + fontSize + "px system-ui, sans-serif";
-      const words = headline.trim().toUpperCase().split(/\\s+/);
+      const words = headline.trim().toUpperCase().split(/\s+/);
       const maxWidth = w - pad * 2;
       const lines: string[] = [];
       let line = "";
